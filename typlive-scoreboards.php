@@ -3,7 +3,7 @@
  * Plugin Name: TYP Live Scoreboards
  * Plugin URI: https://github.com/TYPLive/typlive-scoreboards
  * Description: Streamlabs-ready live pool scoreboards with stable player URLs.
- * Version: 0.4.1
+ * Version: 0.4.2
  * Author: TYP Live
  * Author URI: https://typlive.com/
  * Update URI: https://github.com/TYPLive/typlive-scoreboards
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.4.1' );
+define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.4.2' );
 define( 'TYPLIVE_SCOREBOARDS_FILE', __FILE__ );
 define( 'TYPLIVE_SCOREBOARDS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
@@ -33,6 +33,8 @@ final class TYPLive_Scoreboards {
 	const SNAPSHOT_OPTION = 'typlive_schedule_snapshot';
 	const ALERTS_OPTION = 'typlive_schedule_alerts';
 	const CALENDAR_STATE_OPTION = 'typlive_calendar_event_state';
+	const LATEST_SCHEDULE_OPTION = 'typlive_latest_schedule_data';
+	const MONITOR_RECURRENCE = 'typlive_one_minute';
 
 	/** @var TYPLive_Scoreboards|null */
 	private static $instance = null;
@@ -80,16 +82,18 @@ final class TYPLive_Scoreboards {
 	}
 
 	public function cron_schedules( $schedules ) {
-		$schedules['typlive_five_minutes'] = array(
-			'interval' => 5 * MINUTE_IN_SECONDS,
-			'display'  => 'Every five minutes',
+		$schedules[ self::MONITOR_RECURRENCE ] = array(
+			'interval' => MINUTE_IN_SECONDS,
+			'display'  => 'Every minute',
 		);
 		return $schedules;
 	}
 
 	public function ensure_schedule_monitor() {
-		if ( ! wp_next_scheduled( self::MONITOR_HOOK ) ) {
-			wp_schedule_event( time() + MINUTE_IN_SECONDS, 'typlive_five_minutes', self::MONITOR_HOOK );
+		$event = wp_get_scheduled_event( self::MONITOR_HOOK );
+		if ( ! $event || self::MONITOR_RECURRENCE !== $event->schedule ) {
+			wp_clear_scheduled_hook( self::MONITOR_HOOK );
+			wp_schedule_event( time() + MINUTE_IN_SECONDS, self::MONITOR_RECURRENCE, self::MONITOR_HOOK );
 		}
 	}
 
@@ -292,7 +296,7 @@ final class TYPLive_Scoreboards {
 	}
 
 	private function output_calendar( $slug ) {
-		$data       = $this->schedule_data();
+		$data       = $this->calendar_data();
 		$valid      = 'all' === $slug;
 		$feed_name  = 'Spots & Stripes on Tour';
 		foreach ( $data['players'] as $player ) {
@@ -379,6 +383,17 @@ final class TYPLive_Scoreboards {
 			array( '\\\\', '\\n', '\\n', '\\,', '\\;' ),
 			(string) $value
 		);
+	}
+
+	private function calendar_data() {
+		$cached = get_option( self::LATEST_SCHEDULE_OPTION, array() );
+		if ( is_array( $cached ) && ! empty( $cached['saved_at'] ) && ! empty( $cached['data'] ) && is_array( $cached['data'] ) ) {
+			$age = time() - absint( $cached['saved_at'] );
+			if ( $age >= 0 && $age <= 90 ) {
+				return $cached['data'];
+			}
+		}
+		return $this->schedule_data();
 	}
 
 	private function schedule_data() {
@@ -496,6 +511,14 @@ final class TYPLive_Scoreboards {
 				'source'  => $data['source'],
 			);
 		}
+		update_option(
+			self::LATEST_SCHEDULE_OPTION,
+			array(
+				'saved_at' => time(),
+				'data'     => $data,
+			),
+			false
+		);
 
 		$previous = get_option( self::SNAPSHOT_OPTION, array() );
 		$previous = is_array( $previous ) ? $previous : array();

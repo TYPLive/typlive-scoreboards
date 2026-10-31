@@ -268,7 +268,7 @@ final class TYPLive_Admin {
 				: 'No successful check recorded yet';
 			?>
 			<section class="typlive-source-card<?php echo empty( $source_status['ok'] ) ? ' has-warning' : ''; ?>">
-				<div class="typlive-source-copy"><span class="typlive-source-dot"></span><div><h2>DigitalPool schedule monitor</h2><p>Last successful update: <?php echo esc_html( $last_success ); ?>. Automatic checks run every five minutes through WordPress.</p><?php if ( ! empty( $source_status['last_error'] ) ) : ?><small>Latest error: <?php echo esc_html( $source_status['last_error'] ); ?></small><?php endif; ?></div></div>
+				<div class="typlive-source-copy"><span class="typlive-source-dot"></span><div><h2>DigitalPool schedule monitor</h2><p>Last successful update: <?php echo esc_html( $last_success ); ?>. Automatic checks are scheduled every minute through WordPress. Exact timing requires the host to run wp-cron.php each minute.</p><?php if ( ! empty( $source_status['last_error'] ) ) : ?><small>Latest error: <?php echo esc_html( $source_status['last_error'] ); ?></small><?php endif; ?></div></div>
 				<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
 					<input type="hidden" name="action" value="typlive_check_schedule">
 					<?php wp_nonce_field( 'typlive_check_schedule' ); ?>

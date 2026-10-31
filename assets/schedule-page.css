@@ -213,7 +213,7 @@ a {
 	grid-template-columns: auto minmax(0, 1fr);
 	align-items: center;
 	gap: 12px 18px;
-	margin: 0 0 24px;
+	margin: 26px 0 24px;
 	padding: 12px 14px;
 	background: #151518;
 	border: 1px solid rgba(255, 255, 255, 0.09);
@@ -666,7 +666,7 @@ a {
 	.upusa-scoreboard-links {
 		grid-template-columns: 1fr;
 		gap: 9px;
-		margin: 0 0 22px;
+		margin: 22px 0;
 		padding: 13px;
 	}
 

@@ -68,16 +68,6 @@ foreach ( $schedule as $match ) {
 			</div>
 			<div class="upusa-calendar-subscribe"><div class="upusa-timezone-note"><strong>Event + UK time</strong><small>Both shown together for every dated match</small></div><button type="button" class="upusa-calendar-button" data-subscribe-all>Subscribe for automatic updates</button></div>
 		</section>
-		<nav class="upusa-scoreboard-links" aria-label="Open player scoreboards">
-			<span>Scoreboard quick links</span>
-			<div>
-				<?php foreach ( $scoreboards as $scoreboard ) : ?>
-					<?php $scoreboard_url = home_url( '/scoreboard-' . $scoreboard['slug'] . '/' ); ?>
-					<span class="upusa-scoreboard-link"><a href="<?php echo esc_url( $scoreboard_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $scoreboard['name'] ); ?><span aria-hidden="true">↗</span></a><button type="button" data-share-scoreboard data-url="<?php echo esc_attr( $scoreboard_url ); ?>" data-name="<?php echo esc_attr( $scoreboard['name'] ); ?>" aria-label="Share <?php echo esc_attr( $scoreboard['name'] ); ?> scoreboard">Share</button></span>
-				<?php endforeach; ?>
-			</div>
-		</nav>
-
 		<section class="upusa-next-match" data-next-match hidden>
 			<div class="upusa-next-label"><span>Next match</span><strong data-next-countdown>Calculating…</strong></div>
 			<div class="upusa-next-copy"><strong data-next-player></strong><span data-next-opponent></span></div>
@@ -119,6 +109,16 @@ foreach ( $schedule as $match ) {
 				</section>
 			<?php endforeach; ?>
 		</div>
+
+		<nav class="upusa-scoreboard-links" aria-label="Open player scoreboards">
+			<span>Scoreboard quick links</span>
+			<div>
+				<?php foreach ( $scoreboards as $scoreboard ) : ?>
+					<?php $scoreboard_url = home_url( '/scoreboard-' . $scoreboard['slug'] . '/' ); ?>
+					<span class="upusa-scoreboard-link"><a href="<?php echo esc_url( $scoreboard_url ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $scoreboard['name'] ); ?><span aria-hidden="true">↗</span></a><button type="button" data-share-scoreboard data-url="<?php echo esc_attr( $scoreboard_url ); ?>" data-name="<?php echo esc_attr( $scoreboard['name'] ); ?>" aria-label="Share <?php echo esc_attr( $scoreboard['name'] ); ?> scoreboard">Share</button></span>
+				<?php endforeach; ?>
+			</div>
+		</nav>
 
 		<footer class="upusa-schedule-footer">
 			<span>Match times show event-local Eastern Time and UK time</span>

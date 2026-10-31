@@ -1,5 +1,5 @@
 :root {
-	color-scheme: dark;
+	background: transparent !important;
 }
 
 * {
@@ -11,7 +11,8 @@ body.typlive-overlay-page {
 	width: 100%;
 	height: 100%;
 	margin: 0;
-	background: transparent !important;
+	background-color: transparent !important;
+	background-image: none !important;
 	overflow: hidden;
 }
 
@@ -31,6 +32,7 @@ body.typlive-overlay-page {
 	font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 	font-variant-numeric: tabular-nums;
 	color: #fff;
+	background: transparent !important;
 }
 
 .typlive-card {
@@ -43,7 +45,7 @@ body.typlive-overlay-page {
 	border: 1px solid rgba(255, 255, 255, 0.13);
 	border-top: 3px solid var(--typlive-accent);
 	border-radius: 3px;
-	box-shadow: 0 12px 36px rgba(0, 0, 0, 0.48);
+	box-shadow: none;
 }
 
 .typlive-round {

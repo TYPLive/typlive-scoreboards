@@ -4,7 +4,7 @@ Tags: scoreboard, streamlabs, pool, live scores, overlay
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.4.0
+Stable tag: 0.4.1
 License: GPLv2 or later
 
 Streamlabs-ready live pool scoreboards with stable player URLs.
@@ -19,6 +19,7 @@ TYP Live Scoreboards creates transparent browser-source overlays at routes such 
 The Spots & Stripes on Tour build includes ready-to-use links for Sam, Nigel, Michael, Joe, Ollie, Ashley, Sean and Mary. Additional players can still be selected in Settings > TYP Live Scoreboards.
 
 The combined Spots & Stripes on Tour schedule is available at /upusa-schedule/.
+The live subscribed calendar for every tracked player is available at /upusa-calendar.ics, with player and pair feeds available at /upusa-calendar-{slug}.ics.
 
 Use Settings > TYP Live Scoreboards to configure player mappings, demo scores, styling, the live-scoring source and refresh rate.
 
@@ -41,6 +42,13 @@ If a route returns a WordPress 404, open Settings > Permalinks and click Save Ch
 Scoreboard routes such as /scoreboard-sam/ have a transparent background. A 1280 x 300 browser-source canvas is a good starting point for a landscape lower-third overlay. The design automatically scales down for narrower mobile canvases.
 
 == Changelog ==
+
+= 0.4.1 =
+* Replaced one-time calendar downloads with live subscribed calendar feeds.
+* Added stable event IDs and change sequences so table, opponent and time updates replace the existing calendar event.
+* Added all-player and player/pair-specific calendar feeds with 30-second refresh hints.
+* Changed the public schedule to check DigitalPool every 30 seconds while the page is open.
+* Added the live calendar feed URL to WordPress admin.
 
 = 0.4.0 =
 * Added a live countdown for the next match, following the selected player filter.

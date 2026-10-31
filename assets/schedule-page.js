@@ -161,7 +161,7 @@
 	};
 
 	const calendarButton = () => {
-		const button = element('button', 'upusa-calendar-button', 'Add to calendar');
+		const button = element('button', 'upusa-calendar-button', 'Live calendar');
 		button.type = 'button';
 		button.dataset.addCalendar = '';
 		return button;
@@ -236,56 +236,8 @@
 		applyFilter();
 	};
 
-	const icsEscape = (value) => String(value || '')
-		.replace(/\\/g, '\\\\')
-		.replace(/\n/g, '\\n')
-		.replace(/,/g, '\\,')
-		.replace(/;/g, '\\;');
-
-	const icsDate = (date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
-
-	const addToCalendar = (match) => {
-		const start = new Date(match?.scheduled_time || '');
-		if (Number.isNaN(start.getTime())) {
-			showToast('This match time is still TBC');
-			return;
-		}
-		const end = new Date(start.getTime() + (2 * 60 * 60 * 1000));
-		const player = match.tracked_player || match.player_name || 'Player';
-		const opponent = match.opponent_name || 'Opponent TBC';
-		const location = match.table || 'Table TBC';
-		const title = `${player} vs ${opponent}`;
-		const description = `${match.tournament || 'Ultimate Pool USA'} · ${match.round || 'Match'} · ${location}`;
-		const lines = [
-			'BEGIN:VCALENDAR',
-			'VERSION:2.0',
-			'PRODID:-//TYP Live//Spots and Stripes on Tour//EN',
-			'CALSCALE:GREGORIAN',
-			'METHOD:PUBLISH',
-			'BEGIN:VEVENT',
-			`UID:${Date.now()}-${String(player).replace(/[^a-z0-9]/gi, '').toLowerCase()}@typlive.com`,
-			`DTSTAMP:${icsDate(new Date())}`,
-			`DTSTART:${icsDate(start)}`,
-			`DTEND:${icsDate(end)}`,
-			`SUMMARY:${icsEscape(title)}`,
-			`DESCRIPTION:${icsEscape(description)}`,
-			`LOCATION:${icsEscape(location)}`,
-			'END:VEVENT',
-			'END:VCALENDAR',
-		];
-		const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
-		const url = URL.createObjectURL(blob);
-		const link = document.createElement('a');
-		link.href = url;
-		link.download = `${String(player).replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-match.ics`;
-		document.body.append(link);
-		link.click();
-		link.remove();
-		window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-		showToast('Calendar event downloaded');
-	};
-
 	const matchFromRow = (row) => ({
+		player_slug: row?.dataset.player || 'all',
 		scheduled_time: row?.dataset.scheduledTime || '',
 		tracked_player: row?.dataset.playerName || 'Player',
 		opponent_name: row?.dataset.opponentName || 'Opponent TBC',
@@ -308,6 +260,34 @@
 		field.select();
 		document.execCommand('copy');
 		field.remove();
+	};
+
+	const calendarFeedUrl = (slug = 'all') => {
+		const base = app.dataset.calendarBase || `${window.location.origin}/upusa-calendar`;
+		return slug && slug !== 'all' ? `${base}-${encodeURIComponent(slug)}.ics` : `${base}.ics`;
+	};
+
+	const subscribeCalendar = async (slug = 'all') => {
+		const url = calendarFeedUrl(slug);
+		const appleDevice = /iPad|iPhone|iPod|Macintosh/i.test(navigator.userAgent);
+		if (appleDevice) {
+			try {
+				await copyText(url);
+			} catch (error) {
+				// The webcal handoff still works when clipboard access is unavailable.
+			}
+			showToast('Opening the live calendar subscription');
+			window.setTimeout(() => {
+				window.location.href = url.replace(/^https?:/i, 'webcal:');
+			}, 150);
+			return;
+		}
+		try {
+			await copyText(url);
+			showToast('Live calendar URL copied — add it as a subscribed calendar');
+		} catch (error) {
+			showToast('Could not copy the live calendar URL');
+		}
 	};
 
 	const shareScoreboard = async (button) => {
@@ -335,16 +315,20 @@
 			shareScoreboard(shareButton);
 			return;
 		}
+		if (event.target.closest('[data-subscribe-all]')) {
+			subscribeCalendar('all');
+			return;
+		}
 		if (event.target.closest('[data-next-calendar]')) {
-			if (currentNextMatch) addToCalendar(currentNextMatch);
+			if (currentNextMatch) subscribeCalendar(currentNextMatch.player_slug || 'all');
 			return;
 		}
 		const calendar = event.target.closest('[data-add-calendar]');
-		if (calendar) addToCalendar(matchFromRow(calendar.closest('.upusa-match')));
+		if (calendar) subscribeCalendar(matchFromRow(calendar.closest('.upusa-match')).player_slug);
 	});
 
 	const endpoint = app.dataset.endpoint;
-	const refreshSeconds = Math.max(10, Math.min(60, Number(app.dataset.refresh) || 15));
+	const refreshSeconds = Math.max(10, Math.min(60, Number(app.dataset.refresh) || 30));
 	const poll = async () => {
 		try {
 			const controller = new AbortController();

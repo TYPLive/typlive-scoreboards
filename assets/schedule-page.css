@@ -202,6 +202,12 @@ a {
 	text-align: right;
 }
 
+.upusa-calendar-subscribe {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
 .upusa-scoreboard-links {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
@@ -695,6 +701,16 @@ a {
 
 	.upusa-timezone-note {
 		text-align: left;
+	}
+
+	.upusa-calendar-subscribe {
+		align-items: flex-start;
+		flex-direction: column;
+		width: 100%;
+	}
+
+	.upusa-calendar-subscribe .upusa-calendar-button {
+		width: 100%;
 	}
 
 	.upusa-next-match {

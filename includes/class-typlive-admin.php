@@ -369,6 +369,13 @@ final class TYPLive_Admin {
 						<a class="button button-primary" href="<?php echo esc_url( $schedule_url ); ?>" target="_blank" rel="noopener">Preview schedule</a>
 						<button type="button" class="button" data-copy-url="<?php echo esc_attr( $schedule_url ); ?>">Copy schedule URL</button>
 					</div>
+					<?php $calendar_url = home_url( '/upusa-calendar.ics' ); ?>
+					<p>The subscribed calendar feed keeps match times, opponents and table allocations current when the phone calendar refreshes it.</p>
+					<div class="typlive-schedule-admin-link">
+						<code><?php echo esc_html( $calendar_url ); ?></code>
+						<a class="button" href="<?php echo esc_url( $calendar_url ); ?>" target="_blank" rel="noopener">Open calendar feed</a>
+						<button type="button" class="button" data-copy-url="<?php echo esc_attr( $calendar_url ); ?>">Copy calendar URL</button>
+					</div>
 					<h2 class="typlive-scoreboard-heading">Scoreboard URLs</h2>
 					<p>These links remain transparent scoreboard-only pages for Streamlabs.</p>
 					<div class="typlive-url-list">

@@ -3,7 +3,7 @@
  * Plugin Name: TYP Live Scoreboards
  * Plugin URI: https://github.com/TYPLive/typlive-scoreboards
  * Description: Streamlabs-ready live pool scoreboards with stable player URLs.
- * Version: 0.4.0
+ * Version: 0.4.1
  * Author: TYP Live
  * Author URI: https://typlive.com/
  * Update URI: https://github.com/TYPLive/typlive-scoreboards
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.4.0' );
+define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.4.1' );
 define( 'TYPLIVE_SCOREBOARDS_FILE', __FILE__ );
 define( 'TYPLIVE_SCOREBOARDS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
@@ -32,6 +32,7 @@ final class TYPLive_Scoreboards {
 	const MONITOR_HOOK = 'typlive_schedule_monitor';
 	const SNAPSHOT_OPTION = 'typlive_schedule_snapshot';
 	const ALERTS_OPTION = 'typlive_schedule_alerts';
+	const CALENDAR_STATE_OPTION = 'typlive_calendar_event_state';
 
 	/** @var TYPLive_Scoreboards|null */
 	private static $instance = null;
@@ -156,6 +157,8 @@ final class TYPLive_Scoreboards {
 	public function register_routes() {
 		add_rewrite_rule( '^scoreboard-([a-z0-9-]+)/?$', 'index.php?typlive_scoreboard=$matches[1]', 'top' );
 		add_rewrite_rule( '^upusa-schedule/?$', 'index.php?typlive_upusa_schedule=1', 'top' );
+		add_rewrite_rule( '^upusa-calendar\.ics$', 'index.php?typlive_upusa_calendar=all', 'top' );
+		add_rewrite_rule( '^upusa-calendar-([a-z0-9-]+)\.ics$', 'index.php?typlive_upusa_calendar=$matches[1]', 'top' );
 	}
 
 	public function maybe_flush_rewrite_rules() {
@@ -168,6 +171,7 @@ final class TYPLive_Scoreboards {
 	public function register_query_vars( $vars ) {
 		$vars[] = 'typlive_scoreboard';
 		$vars[] = 'typlive_upusa_schedule';
+		$vars[] = 'typlive_upusa_calendar';
 		return $vars;
 	}
 
@@ -215,6 +219,12 @@ final class TYPLive_Scoreboards {
 	}
 
 	public function render_scoreboard_route() {
+		$calendar_slug = sanitize_title( (string) get_query_var( 'typlive_upusa_calendar' ) );
+		if ( '' !== $calendar_slug ) {
+			$this->output_calendar( $calendar_slug );
+			exit;
+		}
+
 		if ( absint( get_query_var( 'typlive_upusa_schedule' ) ) ) {
 			$this->output_schedule_page();
 			exit;
@@ -273,12 +283,102 @@ final class TYPLive_Scoreboards {
 		$data   = $this->schedule_data();
 		$config = array(
 			'endpoint'       => esc_url_raw( rest_url( 'typlive/v1/schedule' ) ),
-			'refreshSeconds' => 15,
+			'refreshSeconds' => 30,
 		);
 
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
 		include TYPLIVE_SCOREBOARDS_DIR . 'templates/schedule-page.php';
+	}
+
+	private function output_calendar( $slug ) {
+		$data       = $this->schedule_data();
+		$valid      = 'all' === $slug;
+		$feed_name  = 'Spots & Stripes on Tour';
+		foreach ( $data['players'] as $player ) {
+			if ( $slug === $player['slug'] ) {
+				$valid     = true;
+				$feed_name = 'Spots & Stripes - ' . $player['name'];
+			}
+		}
+
+		if ( ! $valid ) {
+			status_header( 404 );
+			header( 'Content-Type: text/plain; charset=' . get_bloginfo( 'charset' ) );
+			echo 'Calendar not found.';
+			return;
+		}
+
+		$last_modified = ! empty( $data['source']['last_success_at'] ) && strtotime( $data['source']['last_success_at'] )
+			? strtotime( $data['source']['last_success_at'] )
+			: time();
+		$calendar_state = get_option( self::CALENDAR_STATE_OPTION, array() );
+		$calendar_state = is_array( $calendar_state ) ? $calendar_state : array();
+		$state_changed  = false;
+		$lines = array(
+			'BEGIN:VCALENDAR',
+			'VERSION:2.0',
+			'PRODID:-//TYP Live//Spots and Stripes on Tour//EN',
+			'CALSCALE:GREGORIAN',
+			'METHOD:PUBLISH',
+			'X-WR-CALNAME:' . $this->ics_escape( $feed_name ),
+			'X-WR-CALDESC:' . $this->ics_escape( 'Live match times and table allocations from DigitalPool.' ),
+			'X-WR-TIMEZONE:Europe/London',
+			'REFRESH-INTERVAL;VALUE=DURATION:PT30S',
+			'X-PUBLISHED-TTL:PT30S',
+		);
+
+		foreach ( $data['schedule'] as $match ) {
+			if ( ( 'all' !== $slug && $slug !== $match['player_slug'] ) || empty( $match['scheduled_time'] ) || ! strtotime( $match['scheduled_time'] ) ) {
+				continue;
+			}
+			$start       = strtotime( $match['scheduled_time'] );
+			$uid_source  = ! empty( $match['match_id'] ) ? 'match-' . absint( $match['match_id'] ) : md5( $match['player_slug'] . '|' . $match['tournament'] . '|' . $match['match_number'] . '|' . $match['round'] );
+			$event_key   = $uid_source . '|' . sanitize_title( $match['player_slug'] );
+			$event_hash  = md5( $match['scheduled_time'] . '|' . $match['table'] . '|' . $match['opponent_name'] . '|' . $match['tournament'] . '|' . $match['round'] . '|' . $match['tracked_player'] );
+			$event_state = isset( $calendar_state[ $event_key ] ) && is_array( $calendar_state[ $event_key ] ) ? $calendar_state[ $event_key ] : array();
+			if ( empty( $event_state ) || empty( $event_state['hash'] ) || $event_hash !== $event_state['hash'] ) {
+				$event_state = array(
+					'hash'     => $event_hash,
+					'sequence' => isset( $event_state['sequence'] ) ? absint( $event_state['sequence'] ) + 1 : 0,
+					'modified' => $last_modified,
+				);
+				$calendar_state[ $event_key ] = $event_state;
+				$state_changed                = true;
+			}
+			$description = $match['tournament'] . ' - ' . $match['round'] . ' - Live table allocation from DigitalPool.';
+			$lines[]     = 'BEGIN:VEVENT';
+			$lines[]     = 'UID:typlive-' . $uid_source . '-' . sanitize_title( $match['player_slug'] ) . '@typlive.com';
+			$lines[]     = 'DTSTAMP:' . gmdate( 'Ymd\THis\Z', $last_modified );
+			$lines[]     = 'LAST-MODIFIED:' . gmdate( 'Ymd\THis\Z', absint( $event_state['modified'] ) );
+			$lines[]     = 'SEQUENCE:' . absint( $event_state['sequence'] );
+			$lines[]     = 'DTSTART:' . gmdate( 'Ymd\THis\Z', $start );
+			$lines[]     = 'DTEND:' . gmdate( 'Ymd\THis\Z', $start + ( 2 * HOUR_IN_SECONDS ) );
+			$lines[]     = 'SUMMARY:' . $this->ics_escape( $match['tracked_player'] . ' vs ' . $match['opponent_name'] );
+			$lines[]     = 'DESCRIPTION:' . $this->ics_escape( $description );
+			$lines[]     = 'LOCATION:' . $this->ics_escape( $match['table'] );
+			$lines[]     = 'URL:' . esc_url_raw( home_url( '/upusa-schedule/' ) );
+			$lines[]     = 'STATUS:CONFIRMED';
+			$lines[]     = 'END:VEVENT';
+		}
+		$lines[] = 'END:VCALENDAR';
+		if ( $state_changed ) {
+			update_option( self::CALENDAR_STATE_OPTION, $calendar_state, false );
+		}
+
+		nocache_headers();
+		header( 'Content-Type: text/calendar; charset=utf-8' );
+		header( 'Content-Disposition: inline; filename="' . ( 'all' === $slug ? 'spots-stripes-on-tour' : 'spots-stripes-' . $slug ) . '.ics"' );
+		header( 'X-Content-Type-Options: nosniff' );
+		echo implode( "\r\n", $lines ) . "\r\n";
+	}
+
+	private function ics_escape( $value ) {
+		return str_replace(
+			array( '\\', "\r\n", "\n", ',', ';' ),
+			array( '\\\\', '\\n', '\\n', '\\,', '\\;' ),
+			(string) $value
+		);
 	}
 
 	private function schedule_data() {

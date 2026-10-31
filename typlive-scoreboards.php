@@ -3,7 +3,7 @@
  * Plugin Name: TYP Live Scoreboards
  * Plugin URI: https://github.com/TYPLive/typlive-scoreboards
  * Description: Streamlabs-ready live pool scoreboards with stable player URLs.
- * Version: 0.3.7
+ * Version: 0.4.0
  * Author: TYP Live
  * Author URI: https://typlive.com/
  * Update URI: https://github.com/TYPLive/typlive-scoreboards
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.3.7' );
+define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.4.0' );
 define( 'TYPLIVE_SCOREBOARDS_FILE', __FILE__ );
 define( 'TYPLIVE_SCOREBOARDS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
@@ -29,6 +29,9 @@ require_once TYPLIVE_SCOREBOARDS_DIR . 'includes/class-typlive-updater.php';
 
 final class TYPLive_Scoreboards {
 	const OPTION_KEY = 'typlive_scoreboards_settings';
+	const MONITOR_HOOK = 'typlive_schedule_monitor';
+	const SNAPSHOT_OPTION = 'typlive_schedule_snapshot';
+	const ALERTS_OPTION = 'typlive_schedule_alerts';
 
 	/** @var TYPLive_Scoreboards|null */
 	private static $instance = null;
@@ -44,8 +47,11 @@ final class TYPLive_Scoreboards {
 
 	private function __construct() {
 		new TYPLive_Updater( TYPLIVE_SCOREBOARDS_FILE );
+		add_filter( 'cron_schedules', array( $this, 'cron_schedules' ) );
 		add_action( 'init', array( $this, 'register_routes' ) );
+		add_action( 'init', array( $this, 'ensure_schedule_monitor' ) );
 		add_action( 'init', array( $this, 'maybe_flush_rewrite_rules' ), 99 );
+		add_action( self::MONITOR_HOOK, array( $this, 'monitor_schedule_changes' ) );
 		add_filter( 'query_vars', array( $this, 'register_query_vars' ) );
 		add_action( 'template_redirect', array( $this, 'render_scoreboard_route' ) );
 		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
@@ -62,12 +68,28 @@ final class TYPLive_Scoreboards {
 		}
 
 		self::instance()->register_routes();
+		self::instance()->ensure_schedule_monitor();
 		flush_rewrite_rules();
 		update_option( 'typlive_scoreboards_rewrite_version', TYPLIVE_SCOREBOARDS_VERSION, false );
 	}
 
 	public static function deactivate() {
+		wp_clear_scheduled_hook( self::MONITOR_HOOK );
 		flush_rewrite_rules();
+	}
+
+	public function cron_schedules( $schedules ) {
+		$schedules['typlive_five_minutes'] = array(
+			'interval' => 5 * MINUTE_IN_SECONDS,
+			'display'  => 'Every five minutes',
+		);
+		return $schedules;
+	}
+
+	public function ensure_schedule_monitor() {
+		if ( ! wp_next_scheduled( self::MONITOR_HOOK ) ) {
+			wp_schedule_event( time() + MINUTE_IN_SECONDS, 'typlive_five_minutes', self::MONITOR_HOOK );
+		}
 	}
 
 	public static function default_settings() {
@@ -265,6 +287,8 @@ final class TYPLive_Scoreboards {
 		$scoreboards    = array();
 		$pair_rows      = array();
 		$api            = new TYPLive_DigitalPool();
+		$source_successes = 0;
+		$source_failures  = 0;
 
 		foreach ( self::tracked_boards() as $slug => $board ) {
 			$player_name            = (string) $board['player_name'];
@@ -279,8 +303,10 @@ final class TYPLive_Scoreboards {
 
 			$schedule = $api->schedule_for_player( $player_name );
 			if ( is_wp_error( $schedule ) ) {
+				++$source_failures;
 				continue;
 			}
+			++$source_successes;
 
 			foreach ( $schedule as $match ) {
 				$display_name = $player_name;
@@ -337,13 +363,106 @@ final class TYPLive_Scoreboards {
 			}
 		);
 
+		$source                   = TYPLive_DigitalPool::source_status();
+		$source['available']      = 0 < $source_successes;
+		$source['query_failures'] = $source_failures;
+
 		return array(
-			'event'      => 'Spots & Stripes on Tour',
-			'players'    => $players,
+			'event'       => 'Spots & Stripes on Tour',
+			'players'     => $players,
 			'scoreboards' => $scoreboards,
-			'schedule'   => $rows,
-			'updated_at' => gmdate( 'c' ),
+			'schedule'    => $rows,
+			'source'      => $source,
+			'updated_at'  => gmdate( 'c' ),
 		);
+	}
+
+	/**
+	 * Compare the current schedule with the previous monitor snapshot.
+	 *
+	 * @param bool $force Whether to bypass the 15-second DigitalPool cache.
+	 * @return array<string,mixed>
+	 */
+	public function monitor_schedule_changes( $force = false ) {
+		if ( $force ) {
+			TYPLive_DigitalPool::clear_cache();
+		}
+
+		$data = $this->schedule_data();
+		if ( empty( $data['source']['available'] ) ) {
+			return array(
+				'ok'      => false,
+				'changes' => 0,
+				'source'  => $data['source'],
+			);
+		}
+
+		$previous = get_option( self::SNAPSHOT_OPTION, array() );
+		$previous = is_array( $previous ) ? $previous : array();
+		$current  = $this->schedule_snapshot( $data['schedule'] );
+		$changes  = array();
+		$fields   = array(
+			'scheduled_time' => 'Match time',
+			'opponent_name'  => 'Opponent',
+			'table'          => 'Table',
+		);
+
+		if ( ! empty( $previous ) ) {
+			foreach ( $current as $key => $match ) {
+				if ( ! isset( $previous[ $key ] ) ) {
+					continue;
+				}
+				foreach ( $fields as $field => $label ) {
+					$old = isset( $previous[ $key ][ $field ] ) ? (string) $previous[ $key ][ $field ] : '';
+					$new = isset( $match[ $field ] ) ? (string) $match[ $field ] : '';
+					if ( $old === $new ) {
+						continue;
+					}
+					$old_display = 'scheduled_time' === $field ? ( ! empty( $previous[ $key ]['scheduled_label'] ) ? $previous[ $key ]['scheduled_label'] : 'Date & time TBC' ) : ( $old ? $old : 'TBC' );
+					$new_display = 'scheduled_time' === $field ? ( ! empty( $match['scheduled_label'] ) ? $match['scheduled_label'] : 'Date & time TBC' ) : ( $new ? $new : 'TBC' );
+					$changes[]   = array(
+						'id'          => md5( $key . '|' . $field . '|' . $old . '|' . $new . '|' . microtime() ),
+						'detected_at' => gmdate( 'c' ),
+						'player'      => $match['player'],
+						'field'       => $label,
+						'old'         => $old_display,
+						'new'         => $new_display,
+					);
+				}
+			}
+		}
+
+		$snapshot = ! empty( $data['source']['query_failures'] ) ? array_merge( $previous, $current ) : $current;
+		update_option( self::SNAPSHOT_OPTION, $snapshot, false );
+
+		if ( ! empty( $changes ) ) {
+			$alerts = get_option( self::ALERTS_OPTION, array() );
+			$alerts = is_array( $alerts ) ? $alerts : array();
+			update_option( self::ALERTS_OPTION, array_slice( array_merge( $changes, $alerts ), 0, 50 ), false );
+		}
+
+		return array(
+			'ok'      => true,
+			'changes' => count( $changes ),
+			'source'  => $data['source'],
+		);
+	}
+
+	private function schedule_snapshot( $schedule ) {
+		$snapshot = array();
+		foreach ( (array) $schedule as $match ) {
+			$key = ! empty( $match['match_id'] )
+				? 'match-' . absint( $match['match_id'] ) . '|' . sanitize_key( $match['player_slug'] )
+				: md5( sanitize_key( $match['player_slug'] ) . '|' . (string) $match['tournament'] . '|' . (string) $match['match_number'] . '|' . (string) $match['round'] );
+			$snapshot[ $key ] = array(
+				'player'          => sanitize_text_field( $match['tracked_player'] ),
+				'opponent_name'   => sanitize_text_field( $match['opponent_name'] ),
+				'table'           => sanitize_text_field( $match['table'] ),
+				'scheduled_time'  => sanitize_text_field( $match['scheduled_time'] ),
+				'scheduled_label' => sanitize_text_field( $match['scheduled_label'] ),
+			);
+		}
+		return $snapshot;
 	}
 
 	private function browser_config( $slug, $data ) {

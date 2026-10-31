@@ -4,7 +4,7 @@ Tags: scoreboard, streamlabs, pool, live scores, overlay
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.3.7
+Stable tag: 0.4.0
 License: GPLv2 or later
 
 Streamlabs-ready live pool scoreboards with stable player URLs.
@@ -41,6 +41,15 @@ If a route returns a WordPress 404, open Settings > Permalinks and click Save Ch
 Scoreboard routes such as /scoreboard-sam/ have a transparent background. A 1280 x 300 browser-source canvas is a good starting point for a landscape lower-third overlay. The design automatically scales down for narrower mobile canvases.
 
 == Changelog ==
+
+= 0.4.0 =
+* Added a live countdown for the next match, following the selected player filter.
+* Added share/copy controls for every scoreboard URL.
+* Added phone-friendly calendar downloads for scheduled matches.
+* Shows event-local Eastern Time and UK time together on each dated match.
+* Shows the last successful DigitalPool update on the public schedule and in WordPress admin.
+* Added five-minute schedule monitoring with admin alerts for opponent, table and match-time changes.
+* Added a manual DigitalPool check and alert history controls in WordPress admin.
 
 = 0.3.7 =
 * Added quick-link buttons for every tracked player's live scoreboard.

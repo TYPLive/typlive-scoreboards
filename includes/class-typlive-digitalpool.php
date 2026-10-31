@@ -9,12 +9,44 @@ final class TYPLive_DigitalPool {
 	const EVENT_ID   = 2693;
 	const EVENT_SLUG = '2026-ultimate-pool-usa-league-grand-finals';
 	const PAIR_TOURNAMENT_IDS = array( 159103, 159104 );
+	const STATUS_OPTION = 'typlive_digitalpool_status';
 
 	/** @var array<string,array<int,string>> */
 	private $competitor_name_cache = array();
 
 	/** @var array<int,array<string,mixed>>|null */
 	private $pair_roster = null;
+
+	/**
+	 * Return the most recent DigitalPool connection state.
+	 *
+	 * @return array<string,mixed>
+	 */
+	public static function source_status() {
+		$status = get_option( self::STATUS_OPTION, array() );
+		return wp_parse_args(
+			is_array( $status ) ? $status : array(),
+			array(
+				'ok'              => false,
+				'last_attempt_at' => '',
+				'last_success_at' => '',
+				'last_error'      => '',
+			)
+		);
+	}
+
+	/** Clear the short-lived DigitalPool caches before a manual/admin check. */
+	public static function clear_cache() {
+		$api = new self();
+		foreach ( TYPLive_Scoreboards::tracked_boards() as $board ) {
+			$player_name = isset( $board['player_name'] ) ? (string) $board['player_name'] : '';
+			if ( '' === trim( $player_name ) ) {
+				continue;
+			}
+			delete_transient( 'typlive_dp_matches_' . md5( self::EVENT_ID . '|' . $api->normalize_name( $player_name ) ) );
+		}
+		delete_transient( 'typlive_dp_pair_roster_' . md5( implode( '|', self::PAIR_TOURNAMENT_IDS ) ) );
+	}
 
 	/**
 	 * Return the most relevant DigitalPool match for a player.
@@ -154,26 +186,50 @@ GRAPHQL;
 		);
 
 		if ( is_wp_error( $response ) ) {
+			$this->record_status( false, $response->get_error_message() );
 			return $response;
 		}
 
 		$status = wp_remote_retrieve_response_code( $response );
 		if ( $status < 200 || $status >= 300 ) {
+			$this->record_status( false, 'DigitalPool returned HTTP ' . absint( $status ) . '.' );
 			return new WP_Error( 'typlive_digitalpool_http', 'DigitalPool returned HTTP ' . absint( $status ) . '.' );
 		}
 
 		$data = json_decode( wp_remote_retrieve_body( $response ), true );
 		if ( ! is_array( $data ) ) {
+			$this->record_status( false, 'DigitalPool returned invalid data.' );
 			return new WP_Error( 'typlive_digitalpool_json', 'DigitalPool returned invalid data.' );
 		}
 
 		if ( ! empty( $data['errors'][0]['message'] ) ) {
+			$this->record_status( false, sanitize_text_field( $data['errors'][0]['message'] ) );
 			return new WP_Error( 'typlive_digitalpool_graphql', sanitize_text_field( $data['errors'][0]['message'] ) );
 		}
 
 		$matches = isset( $data['data']['tournament_brackets'] ) && is_array( $data['data']['tournament_brackets'] ) ? $data['data']['tournament_brackets'] : array();
+		$this->record_status( true );
 		set_transient( $cache_key, $matches, 15 );
 		return $matches;
+	}
+
+	private function record_status( $ok, $message = '' ) {
+		$status       = self::source_status();
+		$last_attempt = ! empty( $status['last_attempt_at'] ) ? strtotime( $status['last_attempt_at'] ) : 0;
+		$same_state   = (bool) $status['ok'] === (bool) $ok;
+		if ( $same_state && $last_attempt && time() - $last_attempt < 30 && ( $ok || $status['last_error'] === sanitize_text_field( $message ) ) ) {
+			return;
+		}
+
+		$status['ok']              = (bool) $ok;
+		$status['last_attempt_at'] = gmdate( 'c' );
+		if ( $ok ) {
+			$status['last_success_at'] = $status['last_attempt_at'];
+			$status['last_error']      = '';
+		} else {
+			$status['last_error'] = sanitize_text_field( $message );
+		}
+		update_option( self::STATUS_OPTION, $status, false );
 	}
 
 	private function choose_match( $matches, $player_name ) {

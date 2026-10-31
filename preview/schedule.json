@@ -1,6 +1,12 @@
 {
   "event": "Spots & Stripes on Tour",
   "updated_at": "2026-10-31T13:50:00Z",
+  "source": {
+    "ok": true,
+    "available": true,
+    "last_success_at": "2026-10-31T16:25:00Z",
+    "last_error": ""
+  },
   "players": [
     { "slug": "sam", "name": "Sam Jones" },
     { "slug": "nigel", "name": "Nigel Smith" },

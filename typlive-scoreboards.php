@@ -3,7 +3,7 @@
  * Plugin Name: TYP Live Scoreboards
  * Plugin URI: https://github.com/TYPLive/typlive-scoreboards
  * Description: Streamlabs-ready live pool scoreboards with stable player URLs.
- * Version: 0.3.0
+ * Version: 0.3.1
  * Author: TYP Live
  * Author URI: https://typlive.com/
  * Update URI: https://github.com/TYPLive/typlive-scoreboards
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.3.0' );
+define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.3.1' );
 define( 'TYPLIVE_SCOREBOARDS_FILE', __FILE__ );
 define( 'TYPLIVE_SCOREBOARDS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
@@ -283,13 +283,17 @@ final class TYPLive_Scoreboards {
 		usort(
 			$rows,
 			function ( $a, $b ) {
-				$a_live = ! empty( $a['live'] );
-				$b_live = ! empty( $b['live'] );
-				if ( $a_live !== $b_live ) {
-					return $a_live ? -1 : 1;
+				$priority   = array( 'live' => 0, 'upcoming' => 1, 'result' => 2 );
+				$a_priority = isset( $priority[ $a['state'] ] ) ? $priority[ $a['state'] ] : 1;
+				$b_priority = isset( $priority[ $b['state'] ] ) ? $priority[ $b['state'] ] : 1;
+				if ( $a_priority !== $b_priority ) {
+					return $a_priority <=> $b_priority;
 				}
 				$a_time = ! empty( $a['scheduled_time'] ) ? strtotime( $a['scheduled_time'] ) : PHP_INT_MAX;
 				$b_time = ! empty( $b['scheduled_time'] ) ? strtotime( $b['scheduled_time'] ) : PHP_INT_MAX;
+				if ( 'result' === $a['state'] ) {
+					return $b_time <=> $a_time;
+				}
 				return $a_time <=> $b_time;
 			}
 		);

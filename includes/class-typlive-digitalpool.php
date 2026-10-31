@@ -25,7 +25,7 @@ final class TYPLive_DigitalPool {
 	}
 
 	/**
-	 * Return upcoming and in-progress scheduled matches for a player.
+	 * Return live, upcoming and completed matches for a player.
 	 *
 	 * @param string $player_name Player display name.
 	 * @return array|WP_Error
@@ -44,7 +44,7 @@ final class TYPLive_DigitalPool {
 			}
 
 			$status = isset( $match['status'] ) ? strtoupper( sanitize_key( $match['status'] ) ) : '';
-			if ( 'COMPLETED' === $status || 'CANCELLED' === $status ) {
+			if ( in_array( $status, array( 'CANCELLED', 'CANCELED' ), true ) ) {
 				continue;
 			}
 
@@ -54,13 +54,17 @@ final class TYPLive_DigitalPool {
 		usort(
 			$schedule,
 			function ( $a, $b ) {
-				$a_live = ! empty( $a['live'] );
-				$b_live = ! empty( $b['live'] );
-				if ( $a_live !== $b_live ) {
-					return $a_live ? -1 : 1;
+				$priority   = array( 'live' => 0, 'upcoming' => 1, 'result' => 2 );
+				$a_priority = isset( $priority[ $a['state'] ] ) ? $priority[ $a['state'] ] : 1;
+				$b_priority = isset( $priority[ $b['state'] ] ) ? $priority[ $b['state'] ] : 1;
+				if ( $a_priority !== $b_priority ) {
+					return $a_priority <=> $b_priority;
 				}
 				$a_time = ! empty( $a['scheduled_time'] ) ? strtotime( $a['scheduled_time'] ) : PHP_INT_MAX;
 				$b_time = ! empty( $b['scheduled_time'] ) ? strtotime( $b['scheduled_time'] ) : PHP_INT_MAX;
+				if ( 'result' === $a['state'] ) {
+					return $b_time <=> $a_time;
+				}
 				return $a_time <=> $b_time;
 			}
 		);
@@ -172,7 +176,7 @@ GRAPHQL;
 			}
 
 			$status = isset( $match['status'] ) ? strtoupper( sanitize_key( $match['status'] ) ) : '';
-			if ( 'COMPLETED' === $status || 'CANCELLED' === $status ) {
+			if ( in_array( $status, array( 'COMPLETED', 'COMPLETE', 'FINISHED', 'FINAL', 'CANCELLED', 'CANCELED' ), true ) ) {
 				continue;
 			}
 
@@ -243,13 +247,31 @@ GRAPHQL;
 
 		$player_score   = $player_is_side1 ? $match['challenger1_score'] : $match['challenger2_score'];
 		$opponent_score = $player_is_side1 ? $match['challenger2_score'] : $match['challenger1_score'];
+		$score_available = is_numeric( $player_score ) && is_numeric( $opponent_score );
+		$live            = in_array( $status, array( 'IN_PROGRESS', 'INPROGRESS', 'LIVE' ), true );
+		$completed       = in_array( $status, array( 'COMPLETED', 'COMPLETE', 'FINISHED', 'FINAL' ), true );
+		$state           = $live ? 'live' : ( $completed ? 'result' : 'upcoming' );
+		$outcome         = '';
+		if ( $completed && $score_available ) {
+			if ( absint( $player_score ) > absint( $opponent_score ) ) {
+				$outcome = 'Win';
+			} elseif ( absint( $player_score ) < absint( $opponent_score ) ) {
+				$outcome = 'Loss';
+			} else {
+				$outcome = 'Draw';
+			}
+		}
 
 		return array(
 			'match_id'       => isset( $match['id'] ) ? absint( $match['id'] ) : 0,
 			'match_number'   => isset( $match['match_number'] ) ? absint( $match['match_number'] ) : 0,
 			'round'          => $round,
 			'status'         => $status,
-			'live'           => 'IN_PROGRESS' === $status,
+			'live'           => $live,
+			'completed'      => $completed,
+			'state'          => $state,
+			'score_available' => $score_available,
+			'result_outcome' => $outcome,
 			'scheduled_time' => $scheduled_time,
 			'scheduled_label' => $scheduled_label,
 			'table'          => $table ? $table : 'Table TBC',

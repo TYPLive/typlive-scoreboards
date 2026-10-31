@@ -4,8 +4,10 @@
 	const app = document.querySelector('[data-schedule-app]');
 	if (!app) return;
 
-	const rowsRoot = app.querySelector('[data-schedule-rows]');
-	const empty = app.querySelector('[data-filter-empty]');
+	const rowsRoots = new Map(
+		Array.from(app.querySelectorAll('[data-schedule-rows]')).map((root) => [root.dataset.scheduleRows, root])
+	);
+	const playerSelect = app.querySelector('[data-player-select]');
 	const feedState = app.querySelector('[data-feed-state]');
 	const updated = app.querySelector('[data-updated]');
 	let activeFilter = 'all';
@@ -17,47 +19,85 @@
 		return node;
 	};
 
+	const matchState = (match) => {
+		if (match?.state === 'live' || match?.live) return 'live';
+		if (match?.state === 'result' || match?.completed) return 'result';
+		return 'upcoming';
+	};
+
 	const applyFilter = () => {
-		let visible = 0;
-		const rows = rowsRoot ? Array.from(rowsRoot.querySelectorAll('[data-player]')) : [];
-		rows.forEach((row) => {
-			const show = activeFilter === 'all' || row.dataset.player === activeFilter;
-			row.hidden = !show;
-			if (show) visible += 1;
+		app.querySelectorAll('[data-schedule-section]').forEach((section) => {
+			const rows = Array.from(section.querySelectorAll('[data-player]'));
+			let visible = 0;
+			rows.forEach((row) => {
+				const show = activeFilter === 'all' || row.dataset.player === activeFilter;
+				row.hidden = !show;
+				if (show) visible += 1;
+			});
+
+			const empty = section.querySelector('[data-section-empty]');
+			const count = section.querySelector('[data-section-count]');
+			if (empty) empty.hidden = visible !== 0;
+			if (count) count.textContent = String(visible);
 		});
-		if (empty) empty.hidden = rows.length === 0 || visible !== 0;
+	};
+
+	const setFilter = (value) => {
+		activeFilter = value || 'all';
+		app.querySelectorAll('[data-filter]').forEach((button) => {
+			button.setAttribute('aria-pressed', String(button.dataset.filter === activeFilter));
+		});
+		if (playerSelect && playerSelect.value !== activeFilter) playerSelect.value = activeFilter;
+		applyFilter();
+	};
+
+	const buildRow = (match) => {
+		const state = matchState(match);
+		const row = element('article', `upusa-match${state === 'live' ? ' is-live' : ''}`);
+		row.dataset.player = match.player_slug || '';
+		row.dataset.matchState = state;
+
+		const timeGroup = element('div', 'upusa-match-time');
+		const time = element('time', '', match.scheduled_label || match.scheduled_time || 'Date & time TBC');
+		if (match.scheduled_time) time.dateTime = String(match.scheduled_time);
+		timeGroup.append(time);
+		if (state === 'live') timeGroup.append(element('span', '', 'Live'));
+
+		const player = element('div', 'upusa-match-player');
+		player.append(element('strong', '', match.tracked_player || 'Player'));
+
+		const detail = element('div', 'upusa-match-detail');
+		const copy = element('div', 'upusa-match-copy');
+		copy.append(
+			element('strong', '', `vs ${match.opponent_name || 'Opponent TBC'}`),
+			element('span', '', `${match.tournament || 'Competition'} · ${match.round || 'Round TBC'}`)
+		);
+		detail.append(copy);
+
+		const showScore = state === 'live' || (state === 'result' && match.score_available !== false);
+		if (showScore) {
+			const outcome = state === 'live' ? 'Current' : (match.result_outcome || 'Final');
+			const outcomeClass = String(outcome).toLowerCase().replace(/[^a-z0-9-]/g, '');
+			const score = element('div', `upusa-inline-score is-${outcomeClass}`);
+			score.append(
+				element('strong', '', `${Number(match.player_score) || 0} – ${Number(match.opponent_score) || 0}`),
+				element('small', '', outcome)
+			);
+			detail.append(score);
+		}
+
+		row.append(timeGroup, player, detail, element('span', 'upusa-match-table', match.table || 'Table TBC'));
+		return row;
 	};
 
 	const render = (data) => {
-		if (!rowsRoot || !Array.isArray(data?.schedule)) return;
-		rowsRoot.replaceChildren();
+		if (!Array.isArray(data?.schedule)) return;
+		rowsRoots.forEach((root) => root.replaceChildren());
 
-		if (data.schedule.length === 0) {
-			rowsRoot.append(element('p', 'upusa-empty', 'No published matches yet. This page will update when the schedule is released.'));
-		} else {
-			data.schedule.forEach((match) => {
-				const row = element('article', `upusa-match${match.live ? ' is-live' : ''}`);
-				row.dataset.player = match.player_slug || '';
-
-				const timeGroup = element('div', 'upusa-match-time');
-				const time = element('time', '', match.scheduled_label || match.scheduled_time || 'Date & time TBC');
-				if (match.scheduled_time) time.dateTime = String(match.scheduled_time);
-				timeGroup.append(time);
-				if (match.live) timeGroup.append(element('span', '', 'Live'));
-
-				const player = element('div', 'upusa-match-player');
-				player.append(element('strong', '', match.tracked_player || 'Player'));
-
-				const detail = element('div', 'upusa-match-detail');
-				detail.append(
-					element('strong', '', `vs ${match.opponent_name || 'Opponent TBC'}`),
-					element('span', '', `${match.tournament || 'Competition'} · ${match.round || 'Round TBC'}`)
-				);
-
-				row.append(timeGroup, player, detail, element('span', 'upusa-match-table', match.table || 'Table TBC'));
-				rowsRoot.append(row);
-			});
-		}
+		data.schedule.forEach((match) => {
+			const root = rowsRoots.get(matchState(match));
+			if (root) root.append(buildRow(match));
+		});
 
 		if (updated) {
 			const stamp = data.updated_at ? new Date(data.updated_at) : new Date();
@@ -68,14 +108,9 @@
 	};
 
 	app.querySelectorAll('[data-filter]').forEach((button) => {
-		button.addEventListener('click', () => {
-			activeFilter = button.dataset.filter || 'all';
-			app.querySelectorAll('[data-filter]').forEach((candidate) => {
-				candidate.setAttribute('aria-pressed', String(candidate === button));
-			});
-			applyFilter();
-		});
+		button.addEventListener('click', () => setFilter(button.dataset.filter));
 	});
+	playerSelect?.addEventListener('change', () => setFilter(playerSelect.value));
 
 	const endpoint = app.dataset.endpoint;
 	const refreshSeconds = Math.max(10, Math.min(60, Number(app.dataset.refresh) || 15));
@@ -99,6 +134,6 @@
 		}
 	};
 
-	applyFilter();
+	setFilter('all');
 	window.setTimeout(poll, 1000);
 })();

@@ -31,51 +31,22 @@
 			<button type="button" data-filter="sean" aria-pressed="false">Sean Avery</button>
 			<button type="button" data-filter="mary" aria-pressed="false">Mary Talbot</button>
 		</nav>
+		<label class="upusa-player-select"><span>Show player</span><select data-player-select><option value="all">All players</option><option value="sam">Sam Jones</option><option value="nigel">Nigel Smith</option><option value="michael">Michael Hope</option><option value="joe">Joe Prince</option><option value="ollie">Ollie Lowe</option><option value="ashley">Ashley Lord Withers</option><option value="sean">Sean Avery</option><option value="mary">Mary Talbot</option></select></label>
 
-		<section class="upusa-schedule-panel" aria-label="Upcoming matches">
-			<div class="upusa-schedule-columns" aria-hidden="true">
-				<span>Date &amp; time</span><span>Player</span><span>Match</span><span>Table</span>
-			</div>
-			<div class="upusa-schedule-rows" data-schedule-rows>
-				<article class="upusa-match" data-player="joe">
-					<div class="upusa-match-time"><time datetime="2026-11-01T20:00:00Z">Sun 1 Nov · 3:00 pm ET</time></div>
-					<div class="upusa-match-player"><strong>Joe Prince</strong></div>
-					<div class="upusa-match-detail"><strong>vs Eric Charlton</strong><span>National 10-Ball Showdown Qualifier · Round 1</span></div>
-					<span class="upusa-match-table">Table TBC</span>
-				</article>
-				<article class="upusa-match" data-player="mary">
-					<div class="upusa-match-time"><time datetime="2026-11-01T20:00:00Z">Sun 1 Nov · 3:00 pm ET</time></div>
-					<div class="upusa-match-player"><strong>Mary Talbot</strong></div>
-					<div class="upusa-match-detail"><strong>vs Shannon Moss</strong><span>National Women's Shootout Qualifier · Round 2</span></div>
-					<span class="upusa-match-table">Table TBC</span>
-				</article>
-				<article class="upusa-match" data-player="michael">
-					<div class="upusa-match-time"><time datetime="2026-11-05T20:30:00Z">Thu 5 Nov · 3:30 pm ET</time></div>
-					<div class="upusa-match-player"><strong>Michael Hope</strong></div>
-					<div class="upusa-match-detail"><strong>vs Mike Pickering</strong><span>National Open · Round 1</span></div>
-					<span class="upusa-match-table">Table TBC</span>
-				</article>
-				<article class="upusa-match" data-player="ashley">
-					<div class="upusa-match-time"><time datetime="2026-11-05T20:30:00Z">Thu 5 Nov · 3:30 pm ET</time></div>
-					<div class="upusa-match-player"><strong>Ashley Lord Withers</strong></div>
-					<div class="upusa-match-detail"><strong>vs Jimmy Briggs</strong><span>National Open · Round 1</span></div>
-					<span class="upusa-match-table">Table TBC</span>
-				</article>
-				<article class="upusa-match" data-player="nigel">
-					<div class="upusa-match-time"><time datetime="2026-11-05T22:30:00Z">Thu 5 Nov · 5:30 pm ET</time></div>
-					<div class="upusa-match-player"><strong>Nigel Smith</strong></div>
-					<div class="upusa-match-detail"><strong>vs Greg Hogue</strong><span>National Open · Round 1</span></div>
-					<span class="upusa-match-table">Table TBC</span>
-				</article>
-				<article class="upusa-match" data-player="ollie">
-					<div class="upusa-match-time"><time datetime="2026-11-07T00:30:00Z">Fri 6 Nov · 7:30 pm ET</time></div>
-					<div class="upusa-match-player"><strong>Ollie Lowe</strong></div>
-					<div class="upusa-match-detail"><strong>vs Thomas Foster</strong><span>National Open · Round 1</span></div>
-					<span class="upusa-match-table">Table TBC</span>
-				</article>
-			</div>
-			<p class="upusa-filter-empty" data-filter-empty hidden>No published matches for this player yet.</p>
-		</section>
+		<div class="upusa-schedule-sections">
+			<section class="upusa-section upusa-section-live" data-schedule-section="live">
+				<header class="upusa-section-header"><h2>Live now</h2><span data-section-count>0</span></header>
+				<div class="upusa-schedule-panel"><div class="upusa-schedule-columns"><span>Date &amp; time</span><span>Player</span><span>Match</span><span>Table</span></div><div class="upusa-schedule-rows" data-schedule-rows="live"></div><p class="upusa-filter-empty" data-section-empty>No live matches right now.</p></div>
+			</section>
+			<section class="upusa-section upusa-section-upcoming" data-schedule-section="upcoming">
+				<header class="upusa-section-header"><h2>Upcoming matches</h2><span data-section-count>0</span></header>
+				<div class="upusa-schedule-panel"><div class="upusa-schedule-columns"><span>Date &amp; time</span><span>Player</span><span>Match</span><span>Table</span></div><div class="upusa-schedule-rows" data-schedule-rows="upcoming"></div><p class="upusa-filter-empty" data-section-empty>No upcoming matches are published for this player.</p></div>
+			</section>
+			<section class="upusa-section upusa-section-result" data-schedule-section="result">
+				<header class="upusa-section-header"><h2>Results</h2><span data-section-count>0</span></header>
+				<div class="upusa-schedule-panel"><div class="upusa-schedule-columns"><span>Date &amp; time</span><span>Player</span><span>Match</span><span>Table</span></div><div class="upusa-schedule-rows" data-schedule-rows="result"></div><p class="upusa-filter-empty" data-section-empty>No results are published for this player yet.</p></div>
+			</section>
+		</div>
 
 		<footer class="upusa-schedule-footer">
 			<span>Times shown in Eastern Time</span>

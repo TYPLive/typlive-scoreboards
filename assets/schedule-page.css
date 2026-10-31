@@ -142,6 +142,49 @@ a {
 	color: #fff;
 }
 
+.upusa-player-select {
+	display: none;
+}
+
+.upusa-schedule-sections {
+	display: grid;
+	gap: 26px;
+}
+
+.upusa-section-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 0 2px 9px;
+}
+
+.upusa-section-header h2 {
+	margin: 0;
+	font-size: 17px;
+	font-weight: 780;
+	letter-spacing: -0.02em;
+}
+
+.upusa-section-header span {
+	display: grid;
+	place-items: center;
+	min-width: 25px;
+	height: 25px;
+	padding: 0 7px;
+	background: #1b1b1e;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 999px;
+	color: #aaaab0;
+	font-size: 10px;
+	font-weight: 760;
+}
+
+.upusa-section-live .upusa-section-header h2,
+.upusa-section-live .upusa-section-header span {
+	color: #ff525c;
+}
+
 .upusa-schedule-panel {
 	overflow: hidden;
 	background: rgba(8, 8, 9, 0.94);
@@ -216,14 +259,14 @@ a {
 }
 
 .upusa-match-player,
-.upusa-match-detail {
+.upusa-match-copy {
 	display: grid;
 	min-width: 0;
 	gap: 5px;
 }
 
 .upusa-match-player strong,
-.upusa-match-detail strong {
+.upusa-match-copy strong {
 	overflow: hidden;
 	font-size: 15px;
 	font-weight: 760;
@@ -231,7 +274,7 @@ a {
 	white-space: nowrap;
 }
 
-.upusa-match-detail span {
+.upusa-match-copy span {
 	overflow: hidden;
 	color: #8d8d93;
 	font-size: 10px;
@@ -244,8 +287,53 @@ a {
 	color: #fff;
 }
 
-.upusa-match-detail strong {
+.upusa-match-copy strong {
 	color: #dedee1;
+}
+
+.upusa-match-detail {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	min-width: 0;
+	gap: 18px;
+}
+
+.upusa-inline-score {
+	display: grid;
+	flex: 0 0 auto;
+	justify-items: end;
+	gap: 2px;
+	min-width: 62px;
+}
+
+.upusa-inline-score strong,
+.upusa-inline-score small {
+	display: block;
+}
+
+.upusa-inline-score strong {
+	color: #fff;
+	font-size: 17px;
+	font-weight: 830;
+	letter-spacing: -0.04em;
+}
+
+.upusa-inline-score small {
+	color: #9c9ca2;
+	font-size: 8px;
+	font-weight: 780;
+	letter-spacing: 0.08em;
+	text-transform: uppercase;
+}
+
+.upusa-inline-score.is-win small {
+	color: #4bd17a;
+}
+
+.upusa-inline-score.is-loss small,
+.upusa-inline-score.is-current small {
+	color: #ff525c;
 }
 
 .upusa-match-table {
@@ -302,6 +390,36 @@ a {
 		justify-self: start;
 	}
 
+	.upusa-player-filters {
+		display: none;
+	}
+
+	.upusa-player-select {
+		display: grid;
+		gap: 7px;
+		margin: 14px 0 18px;
+	}
+
+	.upusa-player-select span {
+		color: #929299;
+		font-size: 9px;
+		font-weight: 760;
+		letter-spacing: 0.11em;
+		text-transform: uppercase;
+	}
+
+	.upusa-player-select select {
+		width: 100%;
+		height: 46px;
+		padding: 0 13px;
+		background: #18181b;
+		border: 1px solid rgba(255, 255, 255, 0.14);
+		border-radius: 4px;
+		color: #fff;
+		font-size: 14px;
+		font-weight: 680;
+	}
+
 	.upusa-schedule-columns {
 		display: none;
 	}
@@ -331,6 +449,7 @@ a {
 	.upusa-match-detail {
 		grid-column: 1 / -1;
 		grid-row: 3;
+		align-items: flex-end;
 	}
 
 	.upusa-match-player strong,

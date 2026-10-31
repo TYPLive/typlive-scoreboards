@@ -1,0 +1,207 @@
+:root {
+	color-scheme: dark;
+}
+
+* {
+	box-sizing: border-box;
+}
+
+html,
+body.typlive-overlay-page {
+	width: 100%;
+	height: 100%;
+	margin: 0;
+	background: transparent !important;
+	overflow: hidden;
+}
+
+body.typlive-overlay-page {
+	display: flex;
+	align-items: flex-end;
+	justify-content: center;
+	padding: clamp(8px, 2vw, 28px);
+}
+
+.typlive-scoreboard {
+	--typlive-accent: #e32934;
+	--typlive-panel: rgba(10, 10, 11, 0.97);
+	--typlive-score-panel: #1d1d20;
+	--typlive-line: rgba(255, 255, 255, 0.11);
+	width: min(920px, 100%);
+	font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+	font-variant-numeric: tabular-nums;
+	color: #fff;
+}
+
+.typlive-card {
+	display: grid;
+	grid-template-columns: minmax(125px, 0.65fr) minmax(460px, 3fr);
+	align-items: stretch;
+	min-height: 64px;
+	overflow: hidden;
+	background: var(--typlive-panel);
+	border: 1px solid rgba(255, 255, 255, 0.13);
+	border-top: 3px solid var(--typlive-accent);
+	border-radius: 3px;
+	box-shadow: 0 12px 36px rgba(0, 0, 0, 0.48);
+}
+
+.typlive-round {
+	display: grid;
+	place-items: center;
+	min-width: 0;
+	padding: 0 15px;
+	background: #111113;
+	border-right: 1px solid var(--typlive-line);
+	color: #cfcfd3;
+	font-size: 10px;
+	font-weight: 760;
+	letter-spacing: 0.1em;
+	line-height: 1.25;
+	text-align: center;
+	text-transform: uppercase;
+}
+
+.typlive-match {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	align-items: stretch;
+	min-width: 0;
+}
+
+.typlive-player {
+	display: grid;
+	grid-template-columns: 3px minmax(0, 1fr) 58px;
+	align-items: center;
+	min-width: 0;
+	min-height: 61px;
+}
+
+.typlive-player-opponent {
+	grid-template-columns: 58px minmax(0, 1fr);
+}
+
+.typlive-turn {
+	width: 3px;
+	height: 28px;
+	background: transparent;
+}
+
+.typlive-player-featured .typlive-turn {
+	background: var(--typlive-accent);
+}
+
+.typlive-name {
+	overflow: hidden;
+	padding: 0 14px;
+	font-size: clamp(15px, 2.1vw, 24px);
+	font-weight: 740;
+	letter-spacing: -0.025em;
+	line-height: 1;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.typlive-player-featured .typlive-name {
+	padding-left: 12px;
+}
+
+.typlive-score {
+	display: grid;
+	align-self: stretch;
+	place-items: center;
+	min-width: 56px;
+	background: var(--typlive-score-panel);
+	border-left: 1px solid var(--typlive-line);
+	color: #fff;
+	font-size: clamp(31px, 4vw, 46px);
+	font-weight: 850;
+	letter-spacing: -0.055em;
+	line-height: 1;
+}
+
+.typlive-player-opponent .typlive-score {
+	border-right: 1px solid var(--typlive-line);
+	border-left: 0;
+}
+
+.typlive-score.typlive-score-changed {
+	animation: typlive-score-pop 0.48s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+@keyframes typlive-score-pop {
+	0% { transform: scale(0.76); filter: brightness(1.6); }
+	60% { transform: scale(1.06); }
+	100% { transform: scale(1); filter: brightness(1); }
+}
+
+@media (max-width: 620px) {
+	body.typlive-overlay-page {
+		padding: 6px;
+	}
+
+	.typlive-card {
+		grid-template-columns: 88px minmax(260px, 1fr);
+		min-height: 55px;
+	}
+
+	.typlive-round {
+		padding: 0 7px;
+		font-size: 8px;
+	}
+
+	.typlive-player {
+		grid-template-columns: 3px minmax(0, 1fr) 42px;
+		min-height: 52px;
+	}
+
+	.typlive-player-opponent {
+		grid-template-columns: 42px minmax(0, 1fr);
+	}
+
+	.typlive-name,
+	.typlive-player-featured .typlive-name {
+		padding: 0 7px;
+		font-size: 12px;
+	}
+
+	.typlive-score {
+		min-width: 40px;
+		font-size: 28px;
+	}
+}
+
+@media (max-width: 390px) {
+	.typlive-card {
+		grid-template-columns: 72px minmax(0, 1fr);
+	}
+
+	.typlive-round {
+		font-size: 7px;
+	}
+
+	.typlive-player {
+		grid-template-columns: 2px minmax(0, 1fr) 36px;
+	}
+
+	.typlive-player-opponent {
+		grid-template-columns: 36px minmax(0, 1fr);
+	}
+
+	.typlive-name,
+	.typlive-player-featured .typlive-name {
+		padding: 0 5px;
+		font-size: 10px;
+	}
+
+	.typlive-score {
+		min-width: 34px;
+		font-size: 25px;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.typlive-score.typlive-score-changed {
+		animation: none;
+	}
+}

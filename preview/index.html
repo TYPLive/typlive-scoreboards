@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>UPUSA tracked player schedule</title>
+	<link rel="stylesheet" href="../assets/schedule-page.css">
+</head>
+<body class="typlive-public-schedule">
+	<main class="upusa-schedule" data-schedule-app data-endpoint="schedule.json" data-refresh="60">
+		<header class="upusa-schedule-hero">
+			<div>
+				<p class="upusa-eyebrow">Ultimate Pool USA</p>
+				<h1>Tracked player schedule</h1>
+				<p class="upusa-intro">Match times, opponents and table allocations for the players we are following at the 2026 League Grand Finals.</p>
+			</div>
+			<div class="upusa-live-state" data-feed-state>
+				<span></span>
+				<div><strong>Live schedule</strong><small data-updated>Updates automatically</small></div>
+			</div>
+		</header>
+
+		<nav class="upusa-player-filters" aria-label="Filter schedule by player" data-player-filters>
+			<button type="button" data-filter="all" aria-pressed="true">All players</button>
+			<button type="button" data-filter="sam" aria-pressed="false">Sam Jones</button>
+			<button type="button" data-filter="nigel" aria-pressed="false">Nigel Smith</button>
+			<button type="button" data-filter="michael" aria-pressed="false">Michael Hope</button>
+			<button type="button" data-filter="joe" aria-pressed="false">Joe Prince</button>
+			<button type="button" data-filter="ollie" aria-pressed="false">Ollie Lowe</button>
+			<button type="button" data-filter="ashley" aria-pressed="false">Ashley Lord Withers</button>
+			<button type="button" data-filter="sean" aria-pressed="false">Sean Avery</button>
+			<button type="button" data-filter="mary" aria-pressed="false">Mary Talbot</button>
+		</nav>
+
+		<section class="upusa-schedule-panel" aria-label="Upcoming matches">
+			<div class="upusa-schedule-columns" aria-hidden="true">
+				<span>Date &amp; time</span><span>Tracked player</span><span>Match</span><span>Table</span>
+			</div>
+			<div class="upusa-schedule-rows" data-schedule-rows>
+				<article class="upusa-match" data-player="joe">
+					<div class="upusa-match-time"><time datetime="2026-11-01T20:00:00Z">Sun 1 Nov · 3:00 pm ET</time></div>
+					<div class="upusa-match-player"><strong>Joe Prince</strong><small>Tracked player</small></div>
+					<div class="upusa-match-detail"><strong>vs Eric Charlton</strong><span>National 10-Ball Showdown Qualifier · Round 1</span></div>
+					<span class="upusa-match-table">Table TBC</span>
+				</article>
+				<article class="upusa-match" data-player="mary">
+					<div class="upusa-match-time"><time datetime="2026-11-01T20:00:00Z">Sun 1 Nov · 3:00 pm ET</time></div>
+					<div class="upusa-match-player"><strong>Mary Talbot</strong><small>Tracked player</small></div>
+					<div class="upusa-match-detail"><strong>vs Shannon Moss</strong><span>National Women's Shootout Qualifier · Round 2</span></div>
+					<span class="upusa-match-table">Table TBC</span>
+				</article>
+				<article class="upusa-match" data-player="michael">
+					<div class="upusa-match-time"><time datetime="2026-11-05T20:30:00Z">Thu 5 Nov · 3:30 pm ET</time></div>
+					<div class="upusa-match-player"><strong>Michael Hope</strong><small>Tracked player</small></div>
+					<div class="upusa-match-detail"><strong>vs Mike Pickering</strong><span>National Open · Round 1</span></div>
+					<span class="upusa-match-table">Table TBC</span>
+				</article>
+				<article class="upusa-match" data-player="ashley">
+					<div class="upusa-match-time"><time datetime="2026-11-05T20:30:00Z">Thu 5 Nov · 3:30 pm ET</time></div>
+					<div class="upusa-match-player"><strong>Ashley Lord Withers</strong><small>Tracked player</small></div>
+					<div class="upusa-match-detail"><strong>vs Jimmy Briggs</strong><span>National Open · Round 1</span></div>
+					<span class="upusa-match-table">Table TBC</span>
+				</article>
+				<article class="upusa-match" data-player="nigel">
+					<div class="upusa-match-time"><time datetime="2026-11-05T22:30:00Z">Thu 5 Nov · 5:30 pm ET</time></div>
+					<div class="upusa-match-player"><strong>Nigel Smith</strong><small>Tracked player</small></div>
+					<div class="upusa-match-detail"><strong>vs Greg Hogue</strong><span>National Open · Round 1</span></div>
+					<span class="upusa-match-table">Table TBC</span>
+				</article>
+				<article class="upusa-match" data-player="ollie">
+					<div class="upusa-match-time"><time datetime="2026-11-07T00:30:00Z">Fri 6 Nov · 7:30 pm ET</time></div>
+					<div class="upusa-match-player"><strong>Ollie Lowe</strong><small>Tracked player</small></div>
+					<div class="upusa-match-detail"><strong>vs Thomas Foster</strong><span>National Open · Round 1</span></div>
+					<span class="upusa-match-table">Table TBC</span>
+				</article>
+			</div>
+			<p class="upusa-filter-empty" data-filter-empty hidden>No published matches for this player yet.</p>
+		</section>
+
+		<footer class="upusa-schedule-footer">
+			<span>Times shown in Eastern Time</span>
+			<a href="https://digitalpool.com/events/2026-ultimate-pool-usa-league-grand-finals/player-schedules">Official event schedule</a>
+		</footer>
+	</main>
+	<script src="../assets/schedule-page.js"></script>
+</body>
+</html>

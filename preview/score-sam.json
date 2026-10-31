@@ -1,0 +1,45 @@
+{
+  "event": "ULTIMATE POOL USA",
+  "live": true,
+  "is_demo": true,
+  "feed_ok": true,
+  "feed_message": "",
+  "status": "Design preview",
+	"round": "Last 32",
+  "table": "Table 12",
+  "race_to": 7,
+  "player": { "name": "Sam Jones", "score": 5 },
+  "opponent": { "name": "Alex Morgan", "score": 3 },
+  "schedule": [
+    {
+      "scheduled_time": "2026-11-02T16:30:00Z",
+      "scheduled_label": "Mon 2 Nov · 11:30 am ET",
+      "tournament": "National Open",
+      "round": "Round 1",
+      "opponent_name": "Maddax Roop",
+      "table": "Table 12",
+      "live": true
+    },
+    {
+      "scheduled_time": "2026-11-02T20:00:00Z",
+      "scheduled_label": "Mon 2 Nov · 3:00 pm ET",
+      "tournament": "USA League Grand Finals",
+      "round": "Round 2",
+      "opponent_name": "Opponent TBC",
+      "table": "Table TBC",
+      "live": false
+    },
+    {
+      "scheduled_time": "2026-11-03T15:00:00Z",
+      "scheduled_label": "Tue 3 Nov · 10:00 am ET",
+      "tournament": "National Open",
+      "round": "Round 3",
+      "opponent_name": "Opponent TBC",
+      "table": "Table TBC",
+      "live": false
+    }
+  ],
+  "updated_at": "2026-10-29T18:30:00Z",
+  "source": "preview"
+}
+

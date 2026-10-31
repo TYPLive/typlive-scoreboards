@@ -1,0 +1,24 @@
+{
+  "event": "2026 Ultimate Pool USA League Grand Finals",
+  "updated_at": "2026-10-31T13:50:00Z",
+  "players": [
+    { "slug": "sam", "name": "Sam Jones" },
+    { "slug": "nigel", "name": "Nigel Smith" },
+    { "slug": "michael", "name": "Michael Hope" },
+    { "slug": "joe", "name": "Joe Prince" },
+    { "slug": "ollie", "name": "Ollie Lowe" },
+    { "slug": "ashley", "name": "Ashley Lord Withers" },
+    { "slug": "sean", "name": "Sean Avery" },
+    { "slug": "mary", "name": "Mary Talbot" }
+  ],
+  "schedule": [
+    { "scheduled_time": "2026-11-01T20:00:00Z", "scheduled_label": "Sun 1 Nov · 3:00 pm ET", "tracked_player": "Joe Prince", "player_slug": "joe", "opponent_name": "Eric Charlton", "tournament": "National 10-Ball Showdown Qualifier", "round": "Round 1", "table": "Table TBC", "live": false },
+    { "scheduled_time": "2026-11-01T20:00:00Z", "scheduled_label": "Sun 1 Nov · 3:00 pm ET", "tracked_player": "Mary Talbot", "player_slug": "mary", "opponent_name": "Shannon Moss", "tournament": "National Women's Shootout Qualifier", "round": "Round 2", "table": "Table TBC", "live": false },
+    { "scheduled_time": "2026-11-05T20:30:00Z", "scheduled_label": "Thu 5 Nov · 3:30 pm ET", "tracked_player": "Michael Hope", "player_slug": "michael", "opponent_name": "Mike Pickering", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false },
+    { "scheduled_time": "2026-11-05T20:30:00Z", "scheduled_label": "Thu 5 Nov · 3:30 pm ET", "tracked_player": "Ashley Lord Withers", "player_slug": "ashley", "opponent_name": "Jimmy Briggs", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false },
+    { "scheduled_time": "2026-11-05T22:30:00Z", "scheduled_label": "Thu 5 Nov · 5:30 pm ET", "tracked_player": "Nigel Smith", "player_slug": "nigel", "opponent_name": "Greg Hogue", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false },
+    { "scheduled_time": "2026-11-07T00:30:00Z", "scheduled_label": "Fri 6 Nov · 7:30 pm ET", "tracked_player": "Ollie Lowe", "player_slug": "ollie", "opponent_name": "Thomas Foster", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false },
+    { "scheduled_time": "2026-11-07T00:30:00Z", "scheduled_label": "Fri 6 Nov · 7:30 pm ET", "tracked_player": "Sean Avery", "player_slug": "sean", "opponent_name": "Joel Van Schepen", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false },
+    { "scheduled_time": "2026-11-07T01:30:00Z", "scheduled_label": "Fri 6 Nov · 8:30 pm ET", "tracked_player": "Sam Jones", "player_slug": "sam", "opponent_name": "Maddax Roop", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false }
+  ]
+}

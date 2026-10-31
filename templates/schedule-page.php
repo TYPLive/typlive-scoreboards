@@ -66,7 +66,7 @@ foreach ( $schedule as $match ) {
 			<div class="upusa-data-source<?php echo empty( $source['ok'] ) ? ' has-warning' : ''; ?>" data-source-status data-source-ok="<?php echo ! empty( $source['ok'] ) ? '1' : '0'; ?>" data-source-last-success="<?php echo esc_attr( ! empty( $source['last_success_at'] ) ? $source['last_success_at'] : '' ); ?>">
 				<span></span><div><strong>DigitalPool data</strong><small data-source-copy><?php echo ! empty( $source['last_success_at'] ) ? 'Last successful update recorded' : 'Waiting for first successful update'; ?></small></div>
 			</div>
-			<div class="upusa-calendar-subscribe"><div class="upusa-timezone-note"><strong>Event + UK time</strong><small>Both shown together for every dated match</small></div><button type="button" class="upusa-calendar-button" data-subscribe-all>Subscribe all matches</button></div>
+			<div class="upusa-calendar-subscribe"><div class="upusa-timezone-note"><strong>Event + UK time</strong><small>Both shown together for every dated match</small></div><button type="button" class="upusa-calendar-button" data-subscribe-all>Subscribe for automatic updates</button></div>
 		</section>
 		<nav class="upusa-scoreboard-links" aria-label="Open player scoreboards">
 			<span>Scoreboard quick links</span>
@@ -82,7 +82,7 @@ foreach ( $schedule as $match ) {
 			<div class="upusa-next-label"><span>Next match</span><strong data-next-countdown>Calculating…</strong></div>
 			<div class="upusa-next-copy"><strong data-next-player></strong><span data-next-opponent></span></div>
 			<div class="upusa-next-meta"><span data-next-time></span><span data-next-table></span></div>
-			<button type="button" class="upusa-calendar-button" data-next-calendar>Subscribe live calendar</button>
+			<button type="button" class="upusa-calendar-button" data-next-calendar>Add to calendar</button>
 		</section>
 
 		<div class="upusa-schedule-sections">
@@ -110,7 +110,7 @@ foreach ( $schedule as $match ) {
 										<div class="upusa-match-copy"><strong>vs <?php echo esc_html( $match['opponent_name'] ); ?></strong><span><?php echo esc_html( $match['tournament'] . ' · ' . $match['round'] ); ?></span></div>
 										<?php if ( $show_score ) : ?><div class="upusa-inline-score is-<?php echo esc_attr( $outcome_class ); ?>"><strong><?php echo esc_html( $match['player_score'] . ' – ' . $match['opponent_score'] ); ?></strong><small><?php echo esc_html( 'live' === $state ? 'Current' : $outcome ); ?></small></div><?php endif; ?>
 									</div>
-									<div class="upusa-match-actions"><span class="upusa-match-table"><?php echo esc_html( $match['table'] ); ?></span><?php if ( 'upcoming' === $state && ! empty( $match['scheduled_time'] ) ) : ?><button type="button" class="upusa-calendar-button" data-add-calendar>Live calendar</button><?php endif; ?></div>
+									<div class="upusa-match-actions"><span class="upusa-match-table"><?php echo esc_html( $match['table'] ); ?></span><?php if ( 'upcoming' === $state && ! empty( $match['scheduled_time'] ) ) : ?><button type="button" class="upusa-calendar-button" data-add-calendar>Add to calendar</button><?php endif; ?></div>
 								</article>
 							<?php endforeach; ?>
 						</div>

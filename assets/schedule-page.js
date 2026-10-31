@@ -161,7 +161,7 @@
 	};
 
 	const calendarButton = () => {
-		const button = element('button', 'upusa-calendar-button', 'Live calendar');
+		const button = element('button', 'upusa-calendar-button', 'Add to calendar');
 		button.type = 'button';
 		button.dataset.addCalendar = '';
 		return button;
@@ -234,6 +234,55 @@
 		feedState?.classList.remove('is-reconnecting');
 		updateTimes();
 		applyFilter();
+	};
+
+	const icsEscape = (value) => String(value || '')
+		.replace(/\\/g, '\\\\')
+		.replace(/\n/g, '\\n')
+		.replace(/,/g, '\\,')
+		.replace(/;/g, '\\;');
+
+	const icsDate = (date) => date.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
+
+	const addToCalendar = (match) => {
+		const start = new Date(match?.scheduled_time || '');
+		if (Number.isNaN(start.getTime())) {
+			showToast('This match time is still TBC');
+			return;
+		}
+		const end = new Date(start.getTime() + (2 * 60 * 60 * 1000));
+		const player = match.tracked_player || match.player_name || 'Player';
+		const opponent = match.opponent_name || 'Opponent TBC';
+		const location = match.table || 'Table TBC';
+		const title = `${player} vs ${opponent}`;
+		const description = `${match.tournament || 'Ultimate Pool USA'} · ${match.round || 'Match'} · ${location}`;
+		const lines = [
+			'BEGIN:VCALENDAR',
+			'VERSION:2.0',
+			'PRODID:-//TYP Live//Spots and Stripes on Tour//EN',
+			'CALSCALE:GREGORIAN',
+			'METHOD:PUBLISH',
+			'BEGIN:VEVENT',
+			`UID:${Date.now()}-${String(player).replace(/[^a-z0-9]/gi, '').toLowerCase()}@typlive.com`,
+			`DTSTAMP:${icsDate(new Date())}`,
+			`DTSTART:${icsDate(start)}`,
+			`DTEND:${icsDate(end)}`,
+			`SUMMARY:${icsEscape(title)}`,
+			`DESCRIPTION:${icsEscape(description)}`,
+			`LOCATION:${icsEscape(location)}`,
+			'END:VEVENT',
+			'END:VCALENDAR',
+		];
+		const blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+		const url = URL.createObjectURL(blob);
+		const link = document.createElement('a');
+		link.href = url;
+		link.download = `${String(player).replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase()}-match.ics`;
+		document.body.append(link);
+		link.click();
+		link.remove();
+		window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+		showToast('Calendar event downloaded');
 	};
 
 	const matchFromRow = (row) => ({
@@ -320,11 +369,11 @@
 			return;
 		}
 		if (event.target.closest('[data-next-calendar]')) {
-			if (currentNextMatch) subscribeCalendar(currentNextMatch.player_slug || 'all');
+			if (currentNextMatch) addToCalendar(currentNextMatch);
 			return;
 		}
 		const calendar = event.target.closest('[data-add-calendar]');
-		if (calendar) subscribeCalendar(matchFromRow(calendar.closest('.upusa-match')).player_slug);
+		if (calendar) addToCalendar(matchFromRow(calendar.closest('.upusa-match')));
 	});
 
 	const endpoint = app.dataset.endpoint;

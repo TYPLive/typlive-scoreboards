@@ -2,6 +2,8 @@ name: Release WordPress plugin
 
 on:
   push:
+    branches:
+      - main
     tags:
       - "v*"
 
@@ -24,7 +26,14 @@ jobs:
         shell: bash
         run: find . -path './.git' -prune -o -name '*.php' -print0 | xargs -0 -n1 php -l
 
+      - name: Validate JavaScript syntax
+        shell: bash
+        run: |
+          node --check assets/schedule-page.js
+          node --check assets/scoreboard.js
+
       - name: Validate version
+        if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
@@ -32,6 +41,7 @@ jobs:
           grep -Fq "TYPLIVE_SCOREBOARDS_VERSION', '${VERSION}'" typlive-scoreboards.php
 
       - name: Build installable ZIP
+        if: startsWith(github.ref, 'refs/tags/v')
         shell: bash
         run: |
           mkdir -p build/typlive-scoreboards
@@ -41,6 +51,7 @@ jobs:
           zip -r ../typlive-scoreboards.zip typlive-scoreboards
 
       - name: Publish GitHub release
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true

@@ -4,7 +4,7 @@ Tags: scoreboard, streamlabs, pool, live scores, overlay
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.4.4
+Stable tag: 0.5.0
 License: GPLv2 or later
 
 Streamlabs-ready live pool scoreboards with stable player URLs.
@@ -35,6 +35,17 @@ The plugin reads the Ultimate Pool USA tournament catalogue and live scores from
 6. Copy each generated scoreboard URL into Streamlabs as a browser source.
 7. Share /upusa-schedule/ as the combined public schedule page.
 
+== Match notifications ==
+
+1. Create a OneSignal app and configure Web Push as Custom Code using the site's exact HTTPS origin.
+2. Copy the OneSignal App ID and REST API key from Settings > Keys & IDs.
+3. Open Settings > TYP Live Scoreboards, enable public match-alert subscriptions, paste both values and save.
+4. Open /upusa-schedule/ on a phone and choose Enable match alerts.
+
+Subscribers receive notifications for new matches, table, opponent, time and live-status changes, plus the configured pre-match reminder. The REST API key stays on the WordPress server and is never exposed in the public page.
+
+On iPhone and iPad, add the schedule to the Home Screen, open the new icon and then enable alerts. Apple only permits background web push from a Home Screen web app.
+
 If a route returns a WordPress 404, open Settings > Permalinks and click Save Changes once.
 
 == Streamlabs notes ==
@@ -42,6 +53,13 @@ If a route returns a WordPress 404, open Settings > Permalinks and click Save Ch
 Scoreboard routes such as /scoreboard-sam/ have a transparent background. A 1280 x 300 browser-source canvas is a good starting point for a landscape lower-third overlay. The design automatically scales down for narrower mobile canvases.
 
 == Changelog ==
+
+= 0.5.0 =
+* Added opt-in OneSignal web push notifications for phones and desktop browsers.
+* Sends alerts for new matches, table, opponent, time and live-status changes.
+* Added configurable pre-match reminders and an admin test-alert button.
+* Added a root OneSignal service worker and an iPhone-compatible web app manifest.
+* Keeps the OneSignal REST API key private on the WordPress server.
 
 = 0.4.4 =
 * Moved the scoreboard quick links below the schedule and results.

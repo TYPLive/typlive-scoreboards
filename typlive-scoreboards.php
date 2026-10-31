@@ -3,7 +3,7 @@
  * Plugin Name: TYP Live Scoreboards
  * Plugin URI: https://github.com/TYPLive/typlive-scoreboards
  * Description: Streamlabs-ready live pool scoreboards with stable player URLs.
- * Version: 0.4.4
+ * Version: 0.5.0
  * Author: TYP Live
  * Author URI: https://typlive.com/
  * Update URI: https://github.com/TYPLive/typlive-scoreboards
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.4.4' );
+define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.5.0' );
 define( 'TYPLIVE_SCOREBOARDS_FILE', __FILE__ );
 define( 'TYPLIVE_SCOREBOARDS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
@@ -24,6 +24,7 @@ define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
 require_once TYPLIVE_SCOREBOARDS_DIR . 'includes/class-typlive-agoneus.php';
 require_once TYPLIVE_SCOREBOARDS_DIR . 'includes/class-typlive-digitalpool.php';
 require_once TYPLIVE_SCOREBOARDS_DIR . 'includes/class-typlive-feed.php';
+require_once TYPLIVE_SCOREBOARDS_DIR . 'includes/class-typlive-onesignal.php';
 require_once TYPLIVE_SCOREBOARDS_DIR . 'includes/class-typlive-admin.php';
 require_once TYPLIVE_SCOREBOARDS_DIR . 'includes/class-typlive-updater.php';
 
@@ -34,6 +35,7 @@ final class TYPLive_Scoreboards {
 	const ALERTS_OPTION = 'typlive_schedule_alerts';
 	const CALENDAR_STATE_OPTION = 'typlive_calendar_event_state';
 	const LATEST_SCHEDULE_OPTION = 'typlive_latest_schedule_data';
+	const REMINDER_OPTION = 'typlive_match_reminders_sent';
 	const MONITOR_RECURRENCE = 'typlive_one_minute';
 
 	/** @var TYPLive_Scoreboards|null */
@@ -107,6 +109,10 @@ final class TYPLive_Scoreboards {
 			'selected_event_venue' => '',
 			'accent'          => '#E32934',
 			'refresh_seconds' => 5,
+			'onesignal_enabled' => 0,
+			'onesignal_app_id' => '',
+			'onesignal_api_key' => '',
+			'notification_reminder_minutes' => 30,
 			'boards'          => self::tracked_boards(),
 		);
 	}
@@ -163,6 +169,8 @@ final class TYPLive_Scoreboards {
 		add_rewrite_rule( '^upusa-schedule/?$', 'index.php?typlive_upusa_schedule=1', 'top' );
 		add_rewrite_rule( '^upusa-calendar\.ics$', 'index.php?typlive_upusa_calendar=all', 'top' );
 		add_rewrite_rule( '^upusa-calendar-([a-z0-9-]+)\.ics$', 'index.php?typlive_upusa_calendar=$matches[1]', 'top' );
+		add_rewrite_rule( '^OneSignalSDKWorker\.js$', 'index.php?typlive_onesignal_worker=1', 'top' );
+		add_rewrite_rule( '^upusa-manifest\.webmanifest$', 'index.php?typlive_upusa_manifest=1', 'top' );
 	}
 
 	public function maybe_flush_rewrite_rules() {
@@ -176,6 +184,8 @@ final class TYPLive_Scoreboards {
 		$vars[] = 'typlive_scoreboard';
 		$vars[] = 'typlive_upusa_schedule';
 		$vars[] = 'typlive_upusa_calendar';
+		$vars[] = 'typlive_onesignal_worker';
+		$vars[] = 'typlive_upusa_manifest';
 		return $vars;
 	}
 
@@ -223,6 +233,16 @@ final class TYPLive_Scoreboards {
 	}
 
 	public function render_scoreboard_route() {
+		if ( absint( get_query_var( 'typlive_onesignal_worker' ) ) ) {
+			$this->output_onesignal_worker();
+			exit;
+		}
+
+		if ( absint( get_query_var( 'typlive_upusa_manifest' ) ) ) {
+			$this->output_web_manifest();
+			exit;
+		}
+
 		$calendar_slug = sanitize_title( (string) get_query_var( 'typlive_upusa_calendar' ) );
 		if ( '' !== $calendar_slug ) {
 			$this->output_calendar( $calendar_slug );
@@ -284,15 +304,59 @@ final class TYPLive_Scoreboards {
 	}
 
 	private function output_schedule_page() {
-		$data   = $this->schedule_data();
+		$data     = $this->schedule_data();
+		$settings = self::settings();
 		$config = array(
-			'endpoint'       => esc_url_raw( rest_url( 'typlive/v1/schedule' ) ),
-			'refreshSeconds' => 30,
+			'endpoint'             => esc_url_raw( rest_url( 'typlive/v1/schedule' ) ),
+			'refreshSeconds'       => 30,
+			'notificationsEnabled' => TYPLive_OneSignal::is_configured( $settings ),
+			'oneSignalAppId'       => ! empty( $settings['onesignal_app_id'] ) ? (string) $settings['onesignal_app_id'] : '',
+			'notificationTagKey'   => TYPLive_OneSignal::EVENT_TAG_KEY,
+			'notificationTagValue' => TYPLive_OneSignal::EVENT_TAG_VALUE,
 		);
 
 		nocache_headers();
 		header( 'Content-Type: text/html; charset=' . get_bloginfo( 'charset' ) );
 		include TYPLIVE_SCOREBOARDS_DIR . 'templates/schedule-page.php';
+	}
+
+	private function output_onesignal_worker() {
+		nocache_headers();
+		header( 'Content-Type: application/javascript; charset=utf-8' );
+		header( 'Service-Worker-Allowed: /' );
+		header( 'X-Content-Type-Options: nosniff' );
+		echo 'importScripts("https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.sw.js");';
+	}
+
+	private function output_web_manifest() {
+		$icons = array();
+		foreach ( array( 192, 512 ) as $size ) {
+			$icon = get_site_icon_url( $size );
+			if ( $icon ) {
+				$icons[] = array(
+					'src'     => esc_url_raw( $icon ),
+					'sizes'   => $size . 'x' . $size,
+					'type'    => 'image/png',
+					'purpose' => 'any',
+				);
+			}
+		}
+
+		$manifest = array(
+			'name'             => 'Spots & Stripes on Tour',
+			'short_name'       => 'S&S on Tour',
+			'id'               => '/upusa-schedule/',
+			'start_url'        => '/upusa-schedule/',
+			'scope'            => '/',
+			'display'          => 'standalone',
+			'background_color' => '#101012',
+			'theme_color'      => '#E32934',
+			'icons'            => $icons,
+		);
+
+		nocache_headers();
+		header( 'Content-Type: application/manifest+json; charset=utf-8' );
+		echo wp_json_encode( $manifest, JSON_UNESCAPED_SLASHES );
 	}
 
 	private function output_calendar( $slug ) {
@@ -528,14 +592,33 @@ final class TYPLive_Scoreboards {
 			'scheduled_time' => 'Match time',
 			'opponent_name'  => 'Opponent',
 			'table'          => 'Table',
+			'state'          => 'Match status',
 		);
 
 		if ( ! empty( $previous ) ) {
 			foreach ( $current as $key => $match ) {
 				if ( ! isset( $previous[ $key ] ) ) {
+					$changes[] = array(
+						'id'             => md5( $key . '|new|' . microtime() ),
+						'match_key'      => $key,
+						'detected_at'    => gmdate( 'c' ),
+						'player'         => $match['player'],
+						'player_slug'    => $match['player_slug'],
+						'field'          => 'New match',
+						'old'            => '',
+						'new'            => $match['round'],
+						'opponent_name'  => $match['opponent_name'],
+						'table'          => $match['table'],
+						'scheduled_time' => $match['scheduled_time'],
+						'scheduled_label' => $match['scheduled_label'],
+						'state'          => $match['state'],
+					);
 					continue;
 				}
 				foreach ( $fields as $field => $label ) {
+					if ( 'state' === $field && ! array_key_exists( 'state', $previous[ $key ] ) ) {
+						continue;
+					}
 					$old = isset( $previous[ $key ][ $field ] ) ? (string) $previous[ $key ][ $field ] : '';
 					$new = isset( $match[ $field ] ) ? (string) $match[ $field ] : '';
 					if ( $old === $new ) {
@@ -543,13 +626,24 @@ final class TYPLive_Scoreboards {
 					}
 					$old_display = 'scheduled_time' === $field ? ( ! empty( $previous[ $key ]['scheduled_label'] ) ? $previous[ $key ]['scheduled_label'] : 'Date & time TBC' ) : ( $old ? $old : 'TBC' );
 					$new_display = 'scheduled_time' === $field ? ( ! empty( $match['scheduled_label'] ) ? $match['scheduled_label'] : 'Date & time TBC' ) : ( $new ? $new : 'TBC' );
+					if ( 'state' === $field ) {
+						$old_display = ucfirst( $old ? $old : 'upcoming' );
+						$new_display = ucfirst( $new ? $new : 'upcoming' );
+					}
 					$changes[]   = array(
-						'id'          => md5( $key . '|' . $field . '|' . $old . '|' . $new . '|' . microtime() ),
-						'detected_at' => gmdate( 'c' ),
-						'player'      => $match['player'],
-						'field'       => $label,
-						'old'         => $old_display,
-						'new'         => $new_display,
+						'id'             => md5( $key . '|' . $field . '|' . $old . '|' . $new . '|' . microtime() ),
+						'match_key'      => $key,
+						'detected_at'    => gmdate( 'c' ),
+						'player'         => $match['player'],
+						'player_slug'    => $match['player_slug'],
+						'field'          => $label,
+						'old'            => $old_display,
+						'new'            => $new_display,
+						'opponent_name'  => $match['opponent_name'],
+						'table'          => $match['table'],
+						'scheduled_time' => $match['scheduled_time'],
+						'scheduled_label' => $match['scheduled_label'],
+						'state'          => $match['state'],
 					);
 				}
 			}
@@ -562,13 +656,149 @@ final class TYPLive_Scoreboards {
 			$alerts = get_option( self::ALERTS_OPTION, array() );
 			$alerts = is_array( $alerts ) ? $alerts : array();
 			update_option( self::ALERTS_OPTION, array_slice( array_merge( $changes, $alerts ), 0, 50 ), false );
+			$this->send_change_notifications( $changes, $current );
 		}
+
+		$this->send_due_match_reminders( $current );
 
 		return array(
 			'ok'      => true,
 			'changes' => count( $changes ),
 			'source'  => $data['source'],
 		);
+	}
+
+	/** @return array<string,mixed> */
+	public function send_test_notification() {
+		$push = new TYPLive_OneSignal( self::settings() );
+		return $push->send(
+			'Spots & Stripes match alerts are ready',
+			'Test successful. Table, opponent, match-time and live-status changes will appear here.',
+			array( 'type' => 'test' )
+		);
+	}
+
+	/**
+	 * @param array<int,array<string,mixed>>    $changes Detected changes.
+	 * @param array<string,array<string,mixed>> $current Current snapshot.
+	 */
+	private function send_change_notifications( $changes, $current ) {
+		$settings = self::settings();
+		if ( ! TYPLive_OneSignal::is_configured( $settings ) ) {
+			return;
+		}
+
+		$grouped = array();
+		foreach ( $changes as $change ) {
+			$key = ! empty( $change['match_key'] ) ? (string) $change['match_key'] : md5( wp_json_encode( $change ) );
+			if ( ! isset( $grouped[ $key ] ) ) {
+				$grouped[ $key ] = array();
+			}
+			$grouped[ $key ][] = $change;
+		}
+
+		$push = new TYPLive_OneSignal( $settings );
+		foreach ( $grouped as $key => $match_changes ) {
+			$match = isset( $current[ $key ] ) ? $current[ $key ] : reset( $match_changes );
+			$fields = wp_list_pluck( $match_changes, 'field' );
+			$state  = ! empty( $match['state'] ) ? (string) $match['state'] : 'upcoming';
+			$player = ! empty( $match['player'] ) ? (string) $match['player'] : 'Spots & Stripes player';
+
+			if ( in_array( 'New match', $fields, true ) ) {
+				$heading = 'New match for ' . $player;
+			} elseif ( in_array( 'Match status', $fields, true ) && 'live' === $state ) {
+				$heading = $player . ' is live';
+			} elseif ( in_array( 'Match status', $fields, true ) && 'result' === $state ) {
+				$heading = $player . ' match finished';
+			} else {
+				$heading = $player . ' match updated';
+			}
+
+			$push->send(
+				$heading,
+				$this->notification_match_body( $match ),
+				array(
+					'type'        => 'match_change',
+					'player_slug' => ! empty( $match['player_slug'] ) ? (string) $match['player_slug'] : '',
+					'state'       => $state,
+				)
+			);
+		}
+	}
+
+	/** @param array<string,array<string,mixed>> $current Current snapshot. */
+	private function send_due_match_reminders( $current ) {
+		$settings = self::settings();
+		if ( ! TYPLive_OneSignal::is_configured( $settings ) ) {
+			return;
+		}
+
+		$reminder_minutes = max( 5, min( 120, absint( $settings['notification_reminder_minutes'] ) ) );
+		$now              = time();
+		$sent             = get_option( self::REMINDER_OPTION, array() );
+		$sent             = is_array( $sent ) ? $sent : array();
+		$stored_count     = count( $sent );
+		$sent             = array_filter(
+			$sent,
+			function ( $timestamp ) use ( $now ) {
+				return absint( $timestamp ) > $now - ( 14 * DAY_IN_SECONDS );
+			}
+		);
+		$changed          = count( $sent ) !== $stored_count;
+		$push             = new TYPLive_OneSignal( $settings );
+
+		foreach ( $current as $key => $match ) {
+			if ( 'upcoming' !== $match['state'] || empty( $match['scheduled_time'] ) ) {
+				continue;
+			}
+			$start = strtotime( $match['scheduled_time'] );
+			$until = $start ? $start - $now : 0;
+			if ( $until <= 0 || $until > $reminder_minutes * MINUTE_IN_SECONDS ) {
+				continue;
+			}
+
+			$reminder_key = md5( $key . '|' . $match['scheduled_time'] . '|' . $reminder_minutes );
+			if ( isset( $sent[ $reminder_key ] ) ) {
+				continue;
+			}
+
+			$minutes_left = max( 1, (int) ceil( $until / MINUTE_IN_SECONDS ) );
+			$result       = $push->send(
+				$match['player'] . ' plays in ' . $minutes_left . ' minutes',
+				$this->notification_match_body( $match ),
+				array(
+					'type'        => 'match_reminder',
+					'player_slug' => $match['player_slug'],
+					'state'       => 'upcoming',
+				)
+			);
+			if ( ! empty( $result['ok'] ) ) {
+				$sent[ $reminder_key ] = $now;
+				$changed               = true;
+			}
+		}
+
+		if ( $changed ) {
+			update_option( self::REMINDER_OPTION, $sent, false );
+		}
+	}
+
+	/**
+	 * @param array<string,mixed> $match Match details.
+	 * @return string
+	 */
+	private function notification_match_body( $match ) {
+		$parts = array();
+		if ( ! empty( $match['opponent_name'] ) ) {
+			$parts[] = 'vs ' . $match['opponent_name'];
+		}
+		if ( ! empty( $match['scheduled_label'] ) ) {
+			$parts[] = $match['scheduled_label'];
+		}
+		if ( ! empty( $match['table'] ) ) {
+			$parts[] = $match['table'];
+		}
+		return implode( ' · ', array_map( 'sanitize_text_field', $parts ) );
 	}
 
 	private function schedule_snapshot( $schedule ) {
@@ -579,10 +809,14 @@ final class TYPLive_Scoreboards {
 				: md5( sanitize_key( $match['player_slug'] ) . '|' . (string) $match['tournament'] . '|' . (string) $match['match_number'] . '|' . (string) $match['round'] );
 			$snapshot[ $key ] = array(
 				'player'          => sanitize_text_field( $match['tracked_player'] ),
+				'player_slug'     => sanitize_key( $match['player_slug'] ),
 				'opponent_name'   => sanitize_text_field( $match['opponent_name'] ),
 				'table'           => sanitize_text_field( $match['table'] ),
 				'scheduled_time'  => sanitize_text_field( $match['scheduled_time'] ),
 				'scheduled_label' => sanitize_text_field( $match['scheduled_label'] ),
+				'state'           => sanitize_key( $match['state'] ),
+				'tournament'      => sanitize_text_field( $match['tournament'] ),
+				'round'           => sanitize_text_field( $match['round'] ),
 			);
 		}
 		return $snapshot;

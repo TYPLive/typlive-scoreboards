@@ -7,7 +7,7 @@
 	<link rel="stylesheet" href="../assets/schedule-page.css">
 </head>
 <body class="typlive-public-schedule">
-	<main class="upusa-schedule" data-schedule-app data-endpoint="schedule.json" data-refresh="30" data-calendar-base="/upusa-calendar">
+	<main class="upusa-schedule" data-schedule-app data-endpoint="schedule.json" data-refresh="30" data-calendar-base="/upusa-calendar" data-onesignal-app-id="preview-app" data-notification-tag-key="typlive_event" data-notification-tag-value="upusa_2026">
 		<header class="upusa-schedule-hero">
 			<div>
 				<p class="upusa-eyebrow">2026 Ultimate Pool USA</p>
@@ -36,8 +36,9 @@
 		<label class="upusa-player-select"><span>Show player</span><select data-player-select><option value="all">All players</option><option value="ashley">Ashley Lord Withers</option><option value="joe">Joe Prince</option><option value="pair-joe-prince-michael-hope">Joe Prince &amp; Michael Hope</option><option value="mary">Mary Talbot</option><option value="pair-mary-talbot-joe-prince">Mary Talbot &amp; Joe Prince</option><option value="michael">Michael Hope</option><option value="nigel">Nigel Smith</option><option value="ollie">Ollie Lowe</option><option value="sam">Sam Jones</option><option value="sean">Sean Avery</option></select></label>
 		<section class="upusa-schedule-tools" aria-label="Schedule options">
 			<div class="upusa-data-source" data-source-status data-source-ok="1" data-source-last-success="2026-10-31T16:25:00Z"><span></span><div><strong>DigitalPool data</strong><small data-source-copy>Last successful update recorded</small></div></div>
-			<div class="upusa-calendar-subscribe"><div class="upusa-timezone-note"><strong>Event + UK time</strong><small>Both shown together for every dated match</small></div><button type="button" class="upusa-calendar-button" data-subscribe-all>Subscribe for automatic updates</button></div>
+			<div class="upusa-calendar-subscribe"><div class="upusa-timezone-note"><strong>Event + UK time</strong><small>Both shown together for every dated match</small></div><button type="button" class="upusa-calendar-button upusa-alert-button" data-match-alerts>Enable match alerts</button><button type="button" class="upusa-calendar-button" data-subscribe-all>Subscribe for automatic updates</button></div>
 		</section>
+		<aside class="upusa-alert-help" data-alert-help hidden><div><strong>Enable alerts on iPhone</strong><span>Tap Share, choose Add to Home Screen, open the new Spots &amp; Stripes icon, then tap Enable match alerts.</span></div><button type="button" data-dismiss-alert-help aria-label="Dismiss notification instructions">×</button></aside>
 		<section class="upusa-next-match" data-next-match hidden><div class="upusa-next-label"><span>Next match</span><strong data-next-countdown>Calculating…</strong></div><div class="upusa-next-copy"><strong data-next-player></strong><span data-next-opponent></span></div><div class="upusa-next-meta"><span data-next-time></span><span data-next-table></span></div><button type="button" class="upusa-calendar-button" data-next-calendar>Add to calendar</button></section>
 
 		<div class="upusa-schedule-sections">
@@ -75,6 +76,7 @@
 		</footer>
 		<div class="upusa-toast" data-toast role="status" aria-live="polite" hidden></div>
 	</main>
+	<script src="onesignal-mock.js"></script>
 	<script src="../assets/schedule-page.js"></script>
 </body>
 </html>

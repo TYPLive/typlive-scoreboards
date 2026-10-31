@@ -62,7 +62,7 @@ foreach ( $schedule as $match ) {
 
 		<div class="upusa-schedule-sections">
 			<?php foreach ( $sections as $state => $section ) : ?>
-				<section class="upusa-section upusa-section-<?php echo esc_attr( $state ); ?>" data-schedule-section="<?php echo esc_attr( $state ); ?>">
+				<section class="upusa-section upusa-section-<?php echo esc_attr( $state ); ?>" data-schedule-section="<?php echo esc_attr( $state ); ?>"<?php echo 'live' === $state && empty( $section['matches'] ) ? ' hidden' : ''; ?>>
 					<header class="upusa-section-header"><h2><?php echo esc_html( $section['title'] ); ?></h2><span data-section-count><?php echo esc_html( count( $section['matches'] ) ); ?></span></header>
 					<div class="upusa-schedule-panel">
 						<div class="upusa-schedule-columns" aria-hidden="true">
@@ -89,7 +89,7 @@ foreach ( $schedule as $match ) {
 								</article>
 							<?php endforeach; ?>
 						</div>
-						<p class="upusa-filter-empty" data-section-empty<?php echo empty( $section['matches'] ) ? '' : ' hidden'; ?>><?php echo esc_html( $section['empty'] ); ?></p>
+						<p class="upusa-filter-empty" data-section-empty<?php echo 'live' === $state || ! empty( $section['matches'] ) ? ' hidden' : ''; ?>><?php echo esc_html( $section['empty'] ); ?></p>
 					</div>
 				</section>
 			<?php endforeach; ?>

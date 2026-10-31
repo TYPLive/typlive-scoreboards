@@ -37,7 +37,9 @@
 
 			const empty = section.querySelector('[data-section-empty]');
 			const count = section.querySelector('[data-section-count]');
-			if (empty) empty.hidden = visible !== 0;
+			const hideLiveSection = section.dataset.scheduleSection === 'live' && visible === 0;
+			section.hidden = hideLiveSection;
+			if (empty) empty.hidden = hideLiveSection || visible !== 0;
 			if (count) count.textContent = String(visible);
 		});
 	};

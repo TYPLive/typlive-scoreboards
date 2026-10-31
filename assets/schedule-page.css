@@ -159,6 +159,10 @@ a {
 	padding: 0 2px 9px;
 }
 
+.upusa-section[hidden] {
+	display: none;
+}
+
 .upusa-section-header h2 {
 	margin: 0;
 	font-size: 17px;

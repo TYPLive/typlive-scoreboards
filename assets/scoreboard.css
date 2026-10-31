@@ -133,6 +133,11 @@ body.typlive-overlay-page {
 
 .typlive-player-featured .typlive-name {
 	padding-left: 12px;
+	text-align: right;
+}
+
+.typlive-player-opponent .typlive-name {
+	text-align: left;
 }
 
 .typlive-score {

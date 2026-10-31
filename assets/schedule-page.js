@@ -14,13 +14,10 @@
 	const sourceCopy = app.querySelector('[data-source-copy]');
 	const nextMatch = app.querySelector('[data-next-match]');
 	const toast = app.querySelector('[data-toast]');
-	const alertButton = app.querySelector('[data-match-alerts]');
-	const alertHelp = app.querySelector('[data-alert-help]');
 	let activeFilter = 'all';
 	let latestSchedule = [];
 	let currentNextMatch = null;
 	let toastTimer = 0;
-	let oneSignalClient = null;
 
 	const element = (tag, className, value) => {
 		const node = document.createElement(tag);
@@ -342,97 +339,6 @@
 		}
 	};
 
-	const isAppleMobile = () => /iPad|iPhone|iPod/i.test(navigator.userAgent)
-		|| (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-	const isStandaloneApp = () => navigator.standalone === true
-		|| window.matchMedia('(display-mode: standalone)').matches
-		|| window.matchMedia('(display-mode: fullscreen)').matches;
-
-	const updateAlertButton = () => {
-		if (!alertButton || !oneSignalClient) return;
-		const requiresHomeScreen = isAppleMobile() && !isStandaloneApp();
-		const supported = oneSignalClient.Notifications.isPushSupported();
-		if (!supported && !requiresHomeScreen) {
-			alertButton.disabled = true;
-			alertButton.textContent = 'Alerts unavailable';
-			return;
-		}
-		const optedIn = oneSignalClient.User.PushSubscription.optedIn === true;
-		alertButton.disabled = false;
-		alertButton.textContent = optedIn ? 'Disable match alerts' : 'Enable match alerts';
-		alertButton.setAttribute('aria-pressed', String(optedIn));
-	};
-
-	const setupMatchAlerts = () => {
-		const appId = app.dataset.onesignalAppId || '';
-		if (!alertButton || !appId) return;
-		if (isAppleMobile() && !isStandaloneApp()) {
-			alertButton.disabled = false;
-			alertButton.setAttribute('aria-pressed', 'false');
-		}
-		window.OneSignalDeferred = window.OneSignalDeferred || [];
-		window.OneSignalDeferred.push(async (OneSignal) => {
-			try {
-				OneSignal.setConsentRequired(true);
-				await OneSignal.init({
-					appId,
-					persistNotification: false,
-					welcomeNotification: { disable: true },
-				});
-				oneSignalClient = OneSignal;
-				OneSignal.Notifications.addEventListener('permissionChange', updateAlertButton);
-				OneSignal.User.PushSubscription.addEventListener('change', updateAlertButton);
-				updateAlertButton();
-			} catch (error) {
-				const requiresHomeScreen = isAppleMobile() && !isStandaloneApp();
-				alertButton.disabled = !requiresHomeScreen;
-				alertButton.textContent = requiresHomeScreen ? 'Enable match alerts' : 'Alerts unavailable';
-			}
-		});
-	};
-
-	const toggleMatchAlerts = async () => {
-		if (!alertButton) return;
-		if (isAppleMobile() && !isStandaloneApp()) {
-			if (alertHelp) alertHelp.hidden = false;
-			showToast('Add this page to your iPhone Home Screen first');
-			return;
-		}
-		if (!oneSignalClient || !oneSignalClient.Notifications.isPushSupported()) {
-			showToast('Match alerts are not available in this browser');
-			return;
-		}
-
-		alertButton.disabled = true;
-		try {
-			const subscription = oneSignalClient.User.PushSubscription;
-			if (subscription.optedIn === true) {
-				oneSignalClient.User.removeTag(app.dataset.notificationTagKey || 'typlive_event');
-				await subscription.optOut();
-				oneSignalClient.setConsentGiven(false);
-				showToast('Match alerts disabled');
-			} else {
-				oneSignalClient.setConsentGiven(true);
-				await oneSignalClient.Notifications.requestPermission();
-				if (!oneSignalClient.Notifications.permission) {
-					showToast('Notification permission was not enabled');
-					return;
-				}
-				await subscription.optIn();
-				oneSignalClient.User.addTag(
-					app.dataset.notificationTagKey || 'typlive_event',
-					app.dataset.notificationTagValue || 'upusa_2026'
-				);
-				showToast('Match alerts enabled');
-			}
-		} catch (error) {
-			showToast('Could not update match alerts');
-		} finally {
-			updateAlertButton();
-		}
-	};
-
 	const shareScoreboard = async (button) => {
 		const url = new URL(button.dataset.url || '/', window.location.href).href;
 		const name = button.dataset.name || 'Player';
@@ -453,14 +359,6 @@
 	});
 	playerSelect?.addEventListener('change', () => setFilter(playerSelect.value));
 	app.addEventListener('click', (event) => {
-		if (event.target.closest('[data-dismiss-alert-help]')) {
-			if (alertHelp) alertHelp.hidden = true;
-			return;
-		}
-		if (event.target.closest('[data-match-alerts]')) {
-			toggleMatchAlerts();
-			return;
-		}
 		const shareButton = event.target.closest('[data-share-scoreboard]');
 		if (shareButton) {
 			shareScoreboard(shareButton);
@@ -501,7 +399,6 @@
 	};
 
 	setFilter('all');
-	setupMatchAlerts();
 	updateTimes();
 	window.setInterval(renderNextMatch, 1000);
 	window.setTimeout(poll, 250);

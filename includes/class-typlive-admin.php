@@ -14,7 +14,6 @@ final class TYPLive_Admin {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
 		add_action( 'admin_post_typlive_check_updates', array( $this, 'check_for_updates' ) );
 		add_action( 'admin_post_typlive_check_schedule', array( $this, 'check_schedule_now' ) );
-		add_action( 'admin_post_typlive_test_notification', array( $this, 'test_notification' ) );
 		add_action( 'admin_post_typlive_clear_schedule_alerts', array( $this, 'clear_schedule_alerts' ) );
 		add_action( 'admin_notices', array( $this, 'schedule_alert_notice' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( TYPLIVE_SCOREBOARDS_FILE ), array( $this, 'settings_link' ) );
@@ -44,7 +43,6 @@ final class TYPLive_Admin {
 		$event_id    = isset( $input['selected_event_id'] ) ? absint( $input['selected_event_id'] ) : 0;
 		$event_name  = isset( $input['selected_event_name'] ) ? sanitize_text_field( $input['selected_event_name'] ) : '';
 		$event_venue = isset( $input['selected_event_venue'] ) ? sanitize_text_field( $input['selected_event_venue'] ) : '';
-		$api_key_input = isset( $input['onesignal_api_key'] ) ? sanitize_text_field( $input['onesignal_api_key'] ) : '';
 		$clean       = array(
 			'mode'                 => isset( $input['mode'] ) && 'demo' === $input['mode'] ? 'demo' : 'live',
 			'source_url'           => $defaults['source_url'],
@@ -54,19 +52,8 @@ final class TYPLive_Admin {
 			'selected_event_venue' => $event_venue,
 			'accent'               => isset( $input['accent'] ) && sanitize_hex_color( $input['accent'] ) ? sanitize_hex_color( $input['accent'] ) : $defaults['accent'],
 			'refresh_seconds'      => isset( $input['refresh_seconds'] ) ? max( 3, min( 60, absint( $input['refresh_seconds'] ) ) ) : 5,
-			'onesignal_enabled'    => ! empty( $input['onesignal_enabled'] ) ? 1 : 0,
-			'onesignal_app_id'     => isset( $input['onesignal_app_id'] ) ? preg_replace( '/[^a-f0-9-]/i', '', (string) $input['onesignal_app_id'] ) : '',
-			'onesignal_api_key'    => '' !== $api_key_input ? $api_key_input : ( ! empty( $current['onesignal_api_key'] ) ? (string) $current['onesignal_api_key'] : '' ),
-			'notification_reminder_minutes' => isset( $input['notification_reminder_minutes'] ) ? max( 5, min( 120, absint( $input['notification_reminder_minutes'] ) ) ) : 30,
 			'boards'               => array(),
 		);
-		if ( ! empty( $clean['onesignal_enabled'] ) && ! preg_match( '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i', $clean['onesignal_app_id'] ) ) {
-			$clean['onesignal_app_id'] = '';
-			add_settings_error( $this->option_key, 'typlive_onesignal_app_id', 'Enter a valid OneSignal App ID before enabling match notifications.', 'error' );
-		}
-		if ( ! empty( $clean['onesignal_enabled'] ) && empty( $clean['onesignal_api_key'] ) ) {
-			add_settings_error( $this->option_key, 'typlive_onesignal_api_key', 'Enter the OneSignal REST API key before enabling match notifications.', 'error' );
-		}
 
 		$submitted = isset( $input['players'] ) && is_array( $input['players'] ) ? $input['players'] : array();
 		foreach ( $submitted as $player_id => $player ) {
@@ -180,25 +167,6 @@ final class TYPLive_Admin {
 		exit;
 	}
 
-	public function test_notification() {
-		if ( ! current_user_can( 'manage_options' ) ) {
-			wp_die( esc_html__( 'You do not have permission to send a test notification.', 'typlive-scoreboards' ) );
-		}
-
-		check_admin_referer( 'typlive_test_notification' );
-		$result   = TYPLive_Scoreboards::instance()->send_test_notification();
-		$status   = ! empty( $result['ok'] ) ? 'sent' : 'error';
-		$redirect = add_query_arg(
-			array(
-				'page'                      => 'typlive-scoreboards',
-				'typlive_notification_test' => $status,
-			),
-			admin_url( 'options-general.php' )
-		);
-		wp_safe_redirect( $redirect );
-		exit;
-	}
-
 	public function clear_schedule_alerts() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			wp_die( esc_html__( 'You do not have permission to clear schedule alerts.', 'typlive-scoreboards' ) );
@@ -226,7 +194,7 @@ final class TYPLive_Admin {
 			return;
 		}
 		$url = admin_url( 'options-general.php?page=typlive-scoreboards#typlive-schedule-alerts' );
-		echo '<div class="notice notice-warning"><p><strong>Spots &amp; Stripes schedule change:</strong> ' . esc_html( count( $alerts ) ) . ' match update(s) need reviewing. <a href="' . esc_url( $url ) . '">View schedule alerts</a>.</p></div>';
+		echo '<div class="notice notice-warning"><p><strong>Spots &amp; Stripes schedule change:</strong> ' . esc_html( count( $alerts ) ) . ' opponent, time or table update(s) need reviewing. <a href="' . esc_url( $url ) . '">View schedule alerts</a>.</p></div>';
 	}
 
 	public function page() {
@@ -236,7 +204,6 @@ final class TYPLive_Admin {
 
 		$settings    = TYPLive_Scoreboards::settings();
 		$source_status = TYPLive_DigitalPool::source_status();
-		$push_status = TYPLive_OneSignal::status();
 		$schedule_alerts = get_option( TYPLive_Scoreboards::ALERTS_OPTION, array() );
 		$schedule_alerts = is_array( $schedule_alerts ) ? $schedule_alerts : array();
 		$api         = new TYPLive_Agoneus();
@@ -267,7 +234,6 @@ final class TYPLive_Admin {
 			$update_version = isset( $_GET['typlive_version'] ) ? sanitize_text_field( wp_unslash( $_GET['typlive_version'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$schedule_check = isset( $_GET['typlive_schedule_check'] ) ? sanitize_key( wp_unslash( $_GET['typlive_schedule_check'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			$schedule_changes = isset( $_GET['typlive_changes'] ) ? absint( $_GET['typlive_changes'] ) : 0; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
-			$notification_test = isset( $_GET['typlive_notification_test'] ) ? sanitize_key( wp_unslash( $_GET['typlive_notification_test'] ) ) : ''; // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( 'current' === $update_status ) {
 				echo '<div class="notice notice-success is-dismissible"><p><strong>Update check complete.</strong> Version ' . esc_html( TYPLIVE_SCOREBOARDS_VERSION ) . ' is current.</p></div>';
 			} elseif ( 'available' === $update_status ) {
@@ -276,7 +242,7 @@ final class TYPLive_Admin {
 				echo '<div class="notice notice-error is-dismissible"><p><strong>The update check could not reach GitHub.</strong> Please try again in a moment.</p></div>';
 			}
 			if ( 'current' === $schedule_check ) {
-				echo '<div class="notice notice-success is-dismissible"><p><strong>DigitalPool check complete.</strong> No new match, time, opponent, table or live-status changes were found.</p></div>';
+				echo '<div class="notice notice-success is-dismissible"><p><strong>DigitalPool check complete.</strong> No match-time, opponent or table changes were found.</p></div>';
 			} elseif ( 'changed' === $schedule_check ) {
 				echo '<div class="notice notice-warning is-dismissible"><p><strong>DigitalPool check complete.</strong> ' . esc_html( $schedule_changes ) . ' schedule change(s) were found.</p></div>';
 			} elseif ( 'error' === $schedule_check ) {
@@ -284,11 +250,6 @@ final class TYPLive_Admin {
 			}
 			if ( ! empty( $_GET['typlive_alerts_cleared'] ) ) { // phpcs:ignore WordPress.Security.NonceVerification.Recommended
 				echo '<div class="notice notice-success is-dismissible"><p>Schedule alerts cleared.</p></div>';
-			}
-			if ( 'sent' === $notification_test ) {
-				echo '<div class="notice notice-success is-dismissible"><p><strong>Test alert sent.</strong> Subscribed devices should receive it shortly.</p></div>';
-			} elseif ( 'error' === $notification_test ) {
-				echo '<div class="notice notice-error is-dismissible"><p><strong>The test alert could not be sent.</strong> Check the OneSignal App ID, REST API key and subscription setup.</p></div>';
 			}
 			?>
 
@@ -315,21 +276,9 @@ final class TYPLive_Admin {
 				</form>
 			</section>
 
-			<?php $push_configured = TYPLive_OneSignal::is_configured( $settings ); ?>
-			<section class="typlive-source-card typlive-push-card<?php echo $push_configured ? '' : ' has-warning'; ?>">
-				<div class="typlive-source-copy"><span class="typlive-source-dot"></span><div><h2>OneSignal match notifications</h2><p><?php echo $push_configured ? 'Ready to notify opted-in phones about new matches, table, opponent, time and live-status changes.' : 'Add the OneSignal App ID and REST API key in Match notification settings below.'; ?></p><?php if ( ! empty( $push_status['last_success_at'] ) ) : ?><small>Last notification sent: <?php echo esc_html( wp_date( 'j M Y, H:i', strtotime( $push_status['last_success_at'] ), new DateTimeZone( 'Europe/London' ) ) . ' UK' ); ?></small><?php elseif ( ! empty( $push_status['last_error'] ) ) : ?><small>Latest error: <?php echo esc_html( $push_status['last_error'] ); ?></small><?php endif; ?></div></div>
-				<?php if ( $push_configured ) : ?>
-					<form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>">
-						<input type="hidden" name="action" value="typlive_test_notification">
-						<?php wp_nonce_field( 'typlive_test_notification' ); ?>
-						<?php submit_button( 'Send test alert', 'secondary', 'submit', false ); ?>
-					</form>
-				<?php endif; ?>
-			</section>
-
 			<?php if ( ! empty( $schedule_alerts ) ) : ?>
 				<section class="typlive-alert-card" id="typlive-schedule-alerts">
-					<div class="typlive-alert-heading"><div><h2>Schedule change alerts</h2><p>New matches plus table, opponent, time and live-status changes detected by the monitor.</p></div><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="typlive_clear_schedule_alerts"><?php wp_nonce_field( 'typlive_clear_schedule_alerts' ); ?><?php submit_button( 'Clear alerts', 'secondary', 'submit', false ); ?></form></div>
+					<div class="typlive-alert-heading"><div><h2>Schedule change alerts</h2><p>Table, opponent and match-time changes detected by the monitor.</p></div><form method="post" action="<?php echo esc_url( admin_url( 'admin-post.php' ) ); ?>"><input type="hidden" name="action" value="typlive_clear_schedule_alerts"><?php wp_nonce_field( 'typlive_clear_schedule_alerts' ); ?><?php submit_button( 'Clear alerts', 'secondary', 'submit', false ); ?></form></div>
 					<div class="typlive-alert-list">
 						<?php foreach ( array_slice( $schedule_alerts, 0, 12 ) as $alert ) : ?>
 							<div><strong><?php echo esc_html( $alert['player'] . ' — ' . $alert['field'] ); ?></strong><span><del><?php echo esc_html( $alert['old'] ); ?></del> <b>→</b> <?php echo esc_html( $alert['new'] ); ?></span><small><?php echo esc_html( wp_date( 'j M, H:i', strtotime( $alert['detected_at'] ), new DateTimeZone( 'Europe/London' ) ) . ' UK' ); ?></small></div>
@@ -405,16 +354,6 @@ final class TYPLive_Admin {
 							<label>Accent colour <input type="color" name="<?php echo esc_attr( $this->option_key ); ?>[accent]" value="<?php echo esc_attr( $settings['accent'] ); ?>"></label>
 							<label>Refresh every <span><input type="number" min="3" max="60" name="<?php echo esc_attr( $this->option_key ); ?>[refresh_seconds]" value="<?php echo esc_attr( $settings['refresh_seconds'] ); ?>"> seconds</span></label>
 						</div>
-						<div class="typlive-notification-settings">
-							<div><h3>Match notification settings</h3><p>OneSignal sends background phone alerts while DigitalPool is checked every minute.</p></div>
-							<label class="typlive-notification-toggle"><input type="checkbox" name="<?php echo esc_attr( $this->option_key ); ?>[onesignal_enabled]" value="1" <?php checked( ! empty( $settings['onesignal_enabled'] ) ); ?>> Enable public match-alert subscriptions</label>
-							<div class="typlive-notification-fields">
-								<label>OneSignal App ID<input type="text" name="<?php echo esc_attr( $this->option_key ); ?>[onesignal_app_id]" value="<?php echo esc_attr( $settings['onesignal_app_id'] ); ?>" placeholder="00000000-0000-0000-0000-000000000000" autocomplete="off"></label>
-								<label>OneSignal REST API key<input type="password" name="<?php echo esc_attr( $this->option_key ); ?>[onesignal_api_key]" value="" placeholder="<?php echo ! empty( $settings['onesignal_api_key'] ) ? 'Saved — leave blank to keep it' : 'Required for sending alerts'; ?>" autocomplete="new-password"></label>
-								<label>Reminder before match<span><input type="number" min="5" max="120" name="<?php echo esc_attr( $this->option_key ); ?>[notification_reminder_minutes]" value="<?php echo esc_attr( $settings['notification_reminder_minutes'] ); ?>"> minutes</span></label>
-							</div>
-							<p class="description">In OneSignal, configure Web Push as <strong>Custom Code</strong> using this site's exact HTTPS address. The plugin supplies the SDK, service worker and opt-in button. <a href="https://documentation.onesignal.com/docs/en/web-push-custom-code-setup" target="_blank" rel="noopener">Open the OneSignal setup guide</a>.</p>
-						</div>
 						<?php submit_button( 'Save players & generate URLs', 'primary large', 'submit', false ); ?>
 					</div>
 				</section>
@@ -473,8 +412,8 @@ final class TYPLive_Admin {
 			.typlive-source-card{display:flex;align-items:center;justify-content:space-between;gap:20px;margin:0 0 14px;padding:16px 20px;background:#fff;border:1px solid #dcdcde;border-left:4px solid #46b450;border-radius:6px}.typlive-source-card.has-warning{border-left-color:#dba617}.typlive-source-copy{display:flex;align-items:flex-start;gap:12px}.typlive-source-dot{flex:0 0 auto;width:10px;height:10px;margin-top:5px;background:#46b450;border-radius:50%;box-shadow:0 0 0 4px rgba(70,180,80,.12)}.has-warning .typlive-source-dot{background:#dba617;box-shadow:0 0 0 4px rgba(219,166,23,.13)}.typlive-source-card h2,.typlive-alert-card h2{margin:0 0 4px;font-size:15px}.typlive-source-card p,.typlive-alert-card p{margin:0;color:#646970}.typlive-source-card small{display:block;margin-top:5px;color:#b32d2e}.typlive-source-card form{flex:0 0 auto}.typlive-alert-card{margin:0 0 14px;padding:18px 20px;background:#fff;border:1px solid #dcdcde;border-left:4px solid #dba617;border-radius:6px}.typlive-alert-heading{display:flex;align-items:center;justify-content:space-between;gap:20px}.typlive-alert-list{display:grid;gap:7px;margin-top:14px}.typlive-alert-list>div{display:grid;grid-template-columns:220px minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 12px;background:#f6f7f7;border-radius:4px}.typlive-alert-list span{overflow-wrap:anywhere}.typlive-alert-list del{color:#8c8f94}.typlive-alert-list b{padding:0 5px;color:<?php echo esc_attr( $accent ); ?>}.typlive-alert-list small{color:#646970;white-space:nowrap}
 			.typlive-step{display:grid;grid-template-columns:42px 1fr;gap:16px;margin:0 0 14px;padding:22px;background:#fff;border:1px solid #dcdcde;border-radius:8px;box-shadow:0 1px 2px rgba(0,0,0,.04)}.typlive-step-number{display:grid;place-items:center;width:36px;height:36px;background:<?php echo esc_attr( $accent ); ?>;color:#101214;border-radius:50%;font-size:16px;font-weight:800}.typlive-step h2{margin:3px 0 5px;font-size:18px}.typlive-step .description{margin:0 0 14px}.typlive-event-form select{width:min(720px,100%);min-height:42px}
 			.typlive-player-tools{display:flex;align-items:center;gap:12px;margin:14px 0}.typlive-player-tools input{width:min(420px,100%);min-height:40px}.typlive-player-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));max-height:440px;overflow:auto;border:1px solid #dcdcde;border-radius:6px}.typlive-player-option{position:relative;display:flex;align-items:center;gap:11px;min-height:58px;padding:9px 12px;border-right:1px solid #eee;border-bottom:1px solid #eee;cursor:pointer}.typlive-player-option:hover{background:#f6f7f7}.typlive-player-option.is-hidden{display:none}.typlive-player-option input[type=checkbox]{position:absolute;opacity:0;pointer-events:none}.typlive-check{flex:0 0 auto;width:19px;height:19px;border:2px solid #8c8f94;border-radius:4px}.typlive-player-option input:checked~.typlive-check{background:<?php echo esc_attr( $accent ); ?>;border-color:#111;box-shadow:inset 0 0 0 3px #fff}.typlive-player-option strong{display:block;color:#1d2327}.typlive-player-option small{display:block;margin-top:2px;color:#8c8f94;font-size:10px;letter-spacing:.08em}
-			.typlive-settings-row{display:flex;flex-wrap:wrap;align-items:end;gap:22px;margin:14px 0 20px}.typlive-settings-row label{display:grid;gap:6px;font-weight:600}.typlive-settings-row input[type=number]{width:80px}.typlive-push-card small{color:#646970}.typlive-notification-settings{display:grid;gap:14px;margin:8px 0 20px;padding:18px;background:#f6f7f7;border:1px solid #dcdcde;border-left:4px solid <?php echo esc_attr( $accent ); ?>;border-radius:6px}.typlive-notification-settings h3{margin:0 0 4px}.typlive-notification-settings p{margin:0;color:#646970}.typlive-notification-toggle{display:flex;align-items:center;gap:8px;font-weight:600}.typlive-notification-fields{display:grid;grid-template-columns:minmax(220px,1fr) minmax(220px,1fr) minmax(150px,.55fr);gap:14px}.typlive-notification-fields label{display:grid;gap:6px;font-weight:600}.typlive-notification-fields input{width:100%;min-height:38px}.typlive-notification-fields input[type=number]{width:90px}.typlive-links{margin-top:22px;padding:22px;background:#111417;color:#fff;border-top:4px solid <?php echo esc_attr( $accent ); ?>;border-radius:7px}.typlive-links h2{margin-top:0;color:#fff}.typlive-links h2.typlive-scoreboard-heading{margin-top:26px}.typlive-links p{color:#b9c0c5}.typlive-schedule-admin-link{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:12px;background:#1d2226;border-radius:5px}.typlive-schedule-admin-link code{overflow:hidden;color:<?php echo esc_attr( $accent ); ?>;text-overflow:ellipsis;white-space:nowrap}.typlive-url-list{display:grid;gap:8px}.typlive-url-row{display:grid;grid-template-columns:160px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:10px;background:#1d2226;border-radius:5px}.typlive-url-row code{overflow:hidden;color:<?php echo esc_attr( $accent ); ?>;text-overflow:ellipsis;white-space:nowrap}
-			@media(max-width:900px){.typlive-player-list{grid-template-columns:repeat(2,minmax(0,1fr))}.typlive-alert-list>div{grid-template-columns:170px minmax(0,1fr)}.typlive-alert-list small{grid-column:1/-1}.typlive-notification-fields{grid-template-columns:1fr}.typlive-schedule-admin-link,.typlive-url-row{grid-template-columns:1fr auto auto}.typlive-schedule-admin-link code,.typlive-url-row code{grid-column:1/-1;grid-row:2}}@media(max-width:600px){.typlive-admin-heading{align-items:flex-start;gap:14px}.typlive-provider{display:none}.typlive-update-card,.typlive-source-card,.typlive-alert-heading{align-items:flex-start;flex-direction:column}.typlive-alert-list>div{grid-template-columns:1fr}.typlive-step{grid-template-columns:1fr;padding:16px}.typlive-player-tools{flex-wrap:wrap}.typlive-player-list{grid-template-columns:1fr}.typlive-schedule-admin-link,.typlive-url-row{grid-template-columns:1fr 1fr}.typlive-schedule-admin-link code,.typlive-url-row strong,.typlive-url-row code{grid-column:1/-1}.typlive-schedule-admin-link .button,.typlive-url-row .button{justify-content:center;text-align:center}}
+			.typlive-settings-row{display:flex;flex-wrap:wrap;align-items:end;gap:22px;margin:14px 0 20px}.typlive-settings-row label{display:grid;gap:6px;font-weight:600}.typlive-settings-row input[type=number]{width:80px}.typlive-links{margin-top:22px;padding:22px;background:#111417;color:#fff;border-top:4px solid <?php echo esc_attr( $accent ); ?>;border-radius:7px}.typlive-links h2{margin-top:0;color:#fff}.typlive-links h2.typlive-scoreboard-heading{margin-top:26px}.typlive-links p{color:#b9c0c5}.typlive-schedule-admin-link{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:12px;background:#1d2226;border-radius:5px}.typlive-schedule-admin-link code{overflow:hidden;color:<?php echo esc_attr( $accent ); ?>;text-overflow:ellipsis;white-space:nowrap}.typlive-url-list{display:grid;gap:8px}.typlive-url-row{display:grid;grid-template-columns:160px minmax(0,1fr) auto auto;align-items:center;gap:10px;padding:10px;background:#1d2226;border-radius:5px}.typlive-url-row code{overflow:hidden;color:<?php echo esc_attr( $accent ); ?>;text-overflow:ellipsis;white-space:nowrap}
+			@media(max-width:900px){.typlive-player-list{grid-template-columns:repeat(2,minmax(0,1fr))}.typlive-alert-list>div{grid-template-columns:170px minmax(0,1fr)}.typlive-alert-list small{grid-column:1/-1}.typlive-schedule-admin-link,.typlive-url-row{grid-template-columns:1fr auto auto}.typlive-schedule-admin-link code,.typlive-url-row code{grid-column:1/-1;grid-row:2}}@media(max-width:600px){.typlive-admin-heading{align-items:flex-start;gap:14px}.typlive-provider{display:none}.typlive-update-card,.typlive-source-card,.typlive-alert-heading{align-items:flex-start;flex-direction:column}.typlive-alert-list>div{grid-template-columns:1fr}.typlive-step{grid-template-columns:1fr;padding:16px}.typlive-player-tools{flex-wrap:wrap}.typlive-player-list{grid-template-columns:1fr}.typlive-schedule-admin-link,.typlive-url-row{grid-template-columns:1fr 1fr}.typlive-schedule-admin-link code,.typlive-url-row strong,.typlive-url-row code{grid-column:1/-1}.typlive-schedule-admin-link .button,.typlive-url-row .button{justify-content:center;text-align:center}}
 		</style>
 		<script>
 		(() => { const search=document.querySelector('#typlive-player-search'),list=document.querySelector('#typlive-player-list'); if(search&&list){search.addEventListener('input',()=>{const q=search.value.trim().toLowerCase();list.querySelectorAll('[data-player-name]').forEach(row=>row.classList.toggle('is-hidden',q&&!row.dataset.playerName.includes(q)))});document.querySelector('[data-select-visible]')?.addEventListener('click',()=>list.querySelectorAll('.typlive-player-option:not(.is-hidden) input[type=checkbox]').forEach(box=>box.checked=true));document.querySelector('[data-clear-players]')?.addEventListener('click',()=>list.querySelectorAll('input[type=checkbox]').forEach(box=>box.checked=false))} document.querySelectorAll('[data-copy-url]').forEach(button=>button.addEventListener('click',async()=>{await navigator.clipboard.writeText(button.dataset.copyUrl);const old=button.textContent;button.textContent='Copied';setTimeout(()=>button.textContent=old,1200)})); })();

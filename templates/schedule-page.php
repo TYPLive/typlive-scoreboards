@@ -24,15 +24,8 @@ foreach ( $schedule as $match ) {
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 	<meta name="robots" content="noindex,nofollow,noarchive">
 	<meta http-equiv="Cache-Control" content="no-store">
-	<meta name="theme-color" content="#E32934">
-	<meta name="apple-mobile-web-app-capable" content="yes">
-	<meta name="apple-mobile-web-app-title" content="S&amp;S on Tour">
 	<title>Spots &amp; Stripes on Tour schedule</title>
-	<link rel="manifest" href="<?php echo esc_url( home_url( '/upusa-manifest.webmanifest' ) ); ?>">
-	<?php $touch_icon = get_site_icon_url( 180 ); ?>
-	<?php if ( $touch_icon ) : ?><link rel="apple-touch-icon" href="<?php echo esc_url( $touch_icon ); ?>"><?php endif; ?>
 	<link rel="stylesheet" href="<?php echo esc_url( TYPLIVE_SCOREBOARDS_URL . 'assets/schedule-page.css?ver=' . TYPLIVE_SCOREBOARDS_VERSION ); ?>">
-	<?php if ( ! empty( $config['notificationsEnabled'] ) ) : ?><script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script><?php endif; ?>
 </head>
 <body class="typlive-public-schedule">
 	<main
@@ -41,9 +34,6 @@ foreach ( $schedule as $match ) {
 		data-endpoint="<?php echo esc_url( $config['endpoint'] ); ?>"
 		data-refresh="<?php echo esc_attr( $config['refreshSeconds'] ); ?>"
 		data-calendar-base="<?php echo esc_url( home_url( '/upusa-calendar' ) ); ?>"
-		data-onesignal-app-id="<?php echo esc_attr( $config['oneSignalAppId'] ); ?>"
-		data-notification-tag-key="<?php echo esc_attr( $config['notificationTagKey'] ); ?>"
-		data-notification-tag-value="<?php echo esc_attr( $config['notificationTagValue'] ); ?>"
 	>
 		<header class="upusa-schedule-hero">
 			<div>
@@ -76,14 +66,8 @@ foreach ( $schedule as $match ) {
 			<div class="upusa-data-source<?php echo empty( $source['ok'] ) ? ' has-warning' : ''; ?>" data-source-status data-source-ok="<?php echo ! empty( $source['ok'] ) ? '1' : '0'; ?>" data-source-last-success="<?php echo esc_attr( ! empty( $source['last_success_at'] ) ? $source['last_success_at'] : '' ); ?>">
 				<span></span><div><strong>DigitalPool data</strong><small data-source-copy><?php echo ! empty( $source['last_success_at'] ) ? 'Last successful update recorded' : 'Waiting for first successful update'; ?></small></div>
 			</div>
-			<div class="upusa-calendar-subscribe"><div class="upusa-timezone-note"><strong>Event + UK time</strong><small>Both shown together for every dated match</small></div><?php if ( ! empty( $config['notificationsEnabled'] ) ) : ?><button type="button" class="upusa-calendar-button upusa-alert-button" data-match-alerts disabled>Enable match alerts</button><?php endif; ?><button type="button" class="upusa-calendar-button" data-subscribe-all>Subscribe for automatic updates</button></div>
+			<div class="upusa-calendar-subscribe"><div class="upusa-timezone-note"><strong>Event + UK time</strong><small>Both shown together for every dated match</small></div><button type="button" class="upusa-calendar-button" data-subscribe-all>Subscribe for automatic updates</button></div>
 		</section>
-		<?php if ( ! empty( $config['notificationsEnabled'] ) ) : ?>
-			<aside class="upusa-alert-help" data-alert-help hidden>
-				<div><strong>Enable alerts on iPhone</strong><span>Tap Share, choose Add to Home Screen, open the new Spots &amp; Stripes icon, then tap Enable match alerts.</span></div>
-				<button type="button" data-dismiss-alert-help aria-label="Dismiss notification instructions">×</button>
-			</aside>
-		<?php endif; ?>
 		<section class="upusa-next-match" data-next-match hidden>
 			<div class="upusa-next-label"><span>Next match</span><strong data-next-countdown>Calculating…</strong></div>
 			<div class="upusa-next-copy"><strong data-next-player></strong><span data-next-opponent></span></div>

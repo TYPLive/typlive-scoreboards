@@ -19,6 +19,8 @@
     { "scheduled_time": "2026-11-05T22:30:00Z", "scheduled_label": "Thu 5 Nov · 5:30 pm ET", "tracked_player": "Nigel Smith", "player_slug": "nigel", "opponent_name": "Greg Hogue", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false },
     { "scheduled_time": "2026-11-07T00:30:00Z", "scheduled_label": "Fri 6 Nov · 7:30 pm ET", "tracked_player": "Ollie Lowe", "player_slug": "ollie", "opponent_name": "Thomas Foster", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false },
     { "scheduled_time": "2026-11-07T00:30:00Z", "scheduled_label": "Fri 6 Nov · 7:30 pm ET", "tracked_player": "Sean Avery", "player_slug": "sean", "opponent_name": "Joel Van Schepen", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false },
-    { "scheduled_time": "2026-11-07T01:30:00Z", "scheduled_label": "Fri 6 Nov · 8:30 pm ET", "tracked_player": "Sam Jones", "player_slug": "sam", "opponent_name": "Maddax Roop", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false }
+    { "scheduled_time": "2026-11-07T01:30:00Z", "scheduled_label": "Fri 6 Nov · 8:30 pm ET", "tracked_player": "Sam Jones", "player_slug": "sam", "opponent_name": "Maddax Roop", "tournament": "National Open", "round": "Round 1", "table": "Table TBC", "live": false },
+    { "scheduled_time": "", "scheduled_label": "Date & time TBC", "tracked_player": "Sam Jones", "player_slug": "sam", "opponent_name": "John Nobles", "tournament": "National Open", "round": "Round 2", "table": "Table TBC", "live": false },
+    { "scheduled_time": "", "scheduled_label": "Date & time TBC", "tracked_player": "Sam Jones", "player_slug": "sam", "opponent_name": "Aj Howell", "tournament": "National Open", "round": "Round 3", "table": "Table TBC", "live": false }
   ]
 }

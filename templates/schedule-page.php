@@ -44,7 +44,7 @@ $players  = isset( $data['players'] ) && is_array( $data['players'] ) ? $data['p
 
 		<section class="upusa-schedule-panel" aria-label="Upcoming matches">
 			<div class="upusa-schedule-columns" aria-hidden="true">
-				<span>Date &amp; time</span><span>Tracked player</span><span>Match</span><span>Table</span>
+				<span>Date &amp; time</span><span>Player</span><span>Match</span><span>Table</span>
 			</div>
 			<div class="upusa-schedule-rows" data-schedule-rows>
 				<?php if ( empty( $schedule ) ) : ?>
@@ -53,10 +53,10 @@ $players  = isset( $data['players'] ) && is_array( $data['players'] ) ? $data['p
 					<?php foreach ( $schedule as $match ) : ?>
 						<article class="upusa-match<?php echo ! empty( $match['live'] ) ? ' is-live' : ''; ?>" data-player="<?php echo esc_attr( $match['player_slug'] ); ?>">
 							<div class="upusa-match-time">
-								<time datetime="<?php echo esc_attr( $match['scheduled_time'] ); ?>"><?php echo esc_html( $match['scheduled_label'] ); ?></time>
+								<time<?php echo ! empty( $match['scheduled_time'] ) ? ' datetime="' . esc_attr( $match['scheduled_time'] ) . '"' : ''; ?>><?php echo esc_html( ! empty( $match['scheduled_label'] ) ? $match['scheduled_label'] : 'Date & time TBC' ); ?></time>
 								<?php if ( ! empty( $match['live'] ) ) : ?><span>Live</span><?php endif; ?>
 							</div>
-							<div class="upusa-match-player"><strong><?php echo esc_html( $match['tracked_player'] ); ?></strong><small>Tracked player</small></div>
+							<div class="upusa-match-player"><strong><?php echo esc_html( $match['tracked_player'] ); ?></strong></div>
 							<div class="upusa-match-detail"><strong>vs <?php echo esc_html( $match['opponent_name'] ); ?></strong><span><?php echo esc_html( $match['tournament'] . ' · ' . $match['round'] ); ?></span></div>
 							<span class="upusa-match-table"><?php echo esc_html( $match['table'] ); ?></span>
 						</article>

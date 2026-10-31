@@ -3,7 +3,7 @@
  * Plugin Name: TYP Live Scoreboards
  * Plugin URI: https://github.com/TYPLive/typlive-scoreboards
  * Description: Streamlabs-ready live pool scoreboards with stable player URLs.
- * Version: 0.2.8
+ * Version: 0.2.9
  * Author: TYP Live
  * Author URI: https://typlive.com/
  * Update URI: https://github.com/TYPLive/typlive-scoreboards
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.2.8' );
+define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.2.9' );
 define( 'TYPLIVE_SCOREBOARDS_FILE', __FILE__ );
 define( 'TYPLIVE_SCOREBOARDS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
@@ -288,7 +288,9 @@ final class TYPLive_Scoreboards {
 				if ( $a_live !== $b_live ) {
 					return $a_live ? -1 : 1;
 				}
-				return strtotime( $a['scheduled_time'] ) <=> strtotime( $b['scheduled_time'] );
+				$a_time = ! empty( $a['scheduled_time'] ) ? strtotime( $a['scheduled_time'] ) : PHP_INT_MAX;
+				$b_time = ! empty( $b['scheduled_time'] ) ? strtotime( $b['scheduled_time'] ) : PHP_INT_MAX;
+				return $a_time <=> $b_time;
 			}
 		);
 

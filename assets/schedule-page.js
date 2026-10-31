@@ -40,13 +40,13 @@
 				row.dataset.player = match.player_slug || '';
 
 				const timeGroup = element('div', 'upusa-match-time');
-				const time = element('time', '', match.scheduled_label || match.scheduled_time || 'Time TBC');
+				const time = element('time', '', match.scheduled_label || match.scheduled_time || 'Date & time TBC');
 				if (match.scheduled_time) time.dateTime = String(match.scheduled_time);
 				timeGroup.append(time);
 				if (match.live) timeGroup.append(element('span', '', 'Live'));
 
 				const player = element('div', 'upusa-match-player');
-				player.append(element('strong', '', match.tracked_player || 'Tracked player'), element('small', '', 'Tracked player'));
+				player.append(element('strong', '', match.tracked_player || 'Player'));
 
 				const detail = element('div', 'upusa-match-detail');
 				detail.append(

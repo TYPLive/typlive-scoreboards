@@ -44,7 +44,7 @@ final class TYPLive_DigitalPool {
 			}
 
 			$status = isset( $match['status'] ) ? strtoupper( sanitize_key( $match['status'] ) ) : '';
-			if ( 'COMPLETED' === $status || 'CANCELLED' === $status || empty( $match['scheduled_time'] ) ) {
+			if ( 'COMPLETED' === $status || 'CANCELLED' === $status ) {
 				continue;
 			}
 
@@ -59,11 +59,13 @@ final class TYPLive_DigitalPool {
 				if ( $a_live !== $b_live ) {
 					return $a_live ? -1 : 1;
 				}
-				return strtotime( $a['scheduled_time'] ) <=> strtotime( $b['scheduled_time'] );
+				$a_time = ! empty( $a['scheduled_time'] ) ? strtotime( $a['scheduled_time'] ) : PHP_INT_MAX;
+				$b_time = ! empty( $b['scheduled_time'] ) ? strtotime( $b['scheduled_time'] ) : PHP_INT_MAX;
+				return $a_time <=> $b_time;
 			}
 		);
 
-		return array_slice( $schedule, 0, 8 );
+		return $schedule;
 	}
 
 	private function matches_for_player( $player_name ) {
@@ -234,7 +236,7 @@ GRAPHQL;
 		}
 
 		$scheduled_time  = isset( $match['scheduled_time'] ) ? sanitize_text_field( $match['scheduled_time'] ) : '';
-		$scheduled_label = '';
+		$scheduled_label = 'Date & time TBC';
 		if ( $scheduled_time && strtotime( $scheduled_time ) ) {
 			$scheduled_label = wp_date( 'D j M · g:i a', strtotime( $scheduled_time ), new DateTimeZone( 'America/New_York' ) ) . ' ET';
 		}

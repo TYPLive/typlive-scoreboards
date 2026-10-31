@@ -10,6 +10,6 @@ The plugin checks this repository's latest public GitHub Release. Every tagged r
 
 1. Update the plugin version in `typlive-scoreboards.php` and the stable tag in `readme.txt`.
 2. Commit the changes.
-3. Push a matching tag, such as `v0.2.8`.
+3. Push a matching semantic-version tag, such as `v0.3.0`.
 
 The release workflow validates the version, builds the correctly nested WordPress ZIP and publishes it to GitHub Releases.

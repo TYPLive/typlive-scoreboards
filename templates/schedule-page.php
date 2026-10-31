@@ -5,6 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 $schedule = isset( $data['schedule'] ) && is_array( $data['schedule'] ) ? $data['schedule'] : array();
 $players  = isset( $data['players'] ) && is_array( $data['players'] ) ? $data['players'] : array();
+$scoreboards = isset( $data['scoreboards'] ) && is_array( $data['scoreboards'] ) ? $data['scoreboards'] : array();
 $sections = array(
 	'live'     => array( 'title' => 'Live now', 'empty' => 'No live matches right now.', 'matches' => array() ),
 	'upcoming' => array( 'title' => 'Upcoming matches', 'empty' => 'No upcoming matches are published for this player.', 'matches' => array() ),
@@ -59,6 +60,14 @@ foreach ( $schedule as $match ) {
 				<?php endforeach; ?>
 			</select>
 		</label>
+		<nav class="upusa-scoreboard-links" aria-label="Open player scoreboards">
+			<span>Scoreboard quick links</span>
+			<div>
+				<?php foreach ( $scoreboards as $scoreboard ) : ?>
+					<a href="<?php echo esc_url( home_url( '/scoreboard-' . $scoreboard['slug'] . '/' ) ); ?>" target="_blank" rel="noopener"><?php echo esc_html( $scoreboard['name'] ); ?><span aria-hidden="true">↗</span></a>
+				<?php endforeach; ?>
+			</div>
+		</nav>
 
 		<div class="upusa-schedule-sections">
 			<?php foreach ( $sections as $state => $section ) : ?>

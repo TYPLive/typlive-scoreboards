@@ -116,11 +116,10 @@ a {
 
 .upusa-player-filters {
 	display: flex;
+	flex-wrap: wrap;
 	gap: 8px;
 	margin: 16px 0;
-	overflow-x: auto;
-	padding: 0 0 5px;
-	scrollbar-width: thin;
+	padding: 0;
 }
 
 .upusa-player-filters button {
@@ -144,6 +143,63 @@ a {
 
 .upusa-player-select {
 	display: none;
+}
+
+.upusa-scoreboard-links {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
+	align-items: center;
+	gap: 12px 18px;
+	margin: 0 0 24px;
+	padding: 12px 14px;
+	background: #151518;
+	border: 1px solid rgba(255, 255, 255, 0.09);
+	border-left: 3px solid var(--upusa-red);
+	border-radius: 4px;
+}
+
+.upusa-scoreboard-links > span {
+	color: #929299;
+	font-size: 9px;
+	font-weight: 780;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+}
+
+.upusa-scoreboard-links > div {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 7px;
+}
+
+.upusa-scoreboard-links a {
+	display: inline-flex;
+	align-items: center;
+	gap: 7px;
+	padding: 7px 10px;
+	background: #202024;
+	border: 1px solid rgba(255, 255, 255, 0.1);
+	border-radius: 3px;
+	color: #d7d7db;
+	font-size: 10px;
+	font-weight: 720;
+	line-height: 1.15;
+	text-decoration: none;
+}
+
+.upusa-scoreboard-links a:hover {
+	background: var(--upusa-red);
+	border-color: var(--upusa-red);
+	color: #fff;
+}
+
+.upusa-scoreboard-links a span {
+	color: var(--upusa-red);
+	font-size: 11px;
+}
+
+.upusa-scoreboard-links a:hover span {
+	color: #fff;
 }
 
 .upusa-schedule-sections {
@@ -422,6 +478,26 @@ a {
 		color: #fff;
 		font-size: 14px;
 		font-weight: 680;
+	}
+
+	.upusa-scoreboard-links {
+		grid-template-columns: 1fr;
+		gap: 9px;
+		margin: 0 0 22px;
+		padding: 13px;
+	}
+
+	.upusa-scoreboard-links > div {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+		gap: 7px;
+	}
+
+	.upusa-scoreboard-links a {
+		justify-content: space-between;
+		min-height: 39px;
+		padding: 8px 9px;
+		white-space: normal;
 	}
 
 	.upusa-schedule-columns {

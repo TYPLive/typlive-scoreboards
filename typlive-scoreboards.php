@@ -3,7 +3,7 @@
  * Plugin Name: TYP Live Scoreboards
  * Plugin URI: https://github.com/TYPLive/typlive-scoreboards
  * Description: Streamlabs-ready live pool scoreboards with stable player URLs.
- * Version: 0.3.6
+ * Version: 0.3.7
  * Author: TYP Live
  * Author URI: https://typlive.com/
  * Update URI: https://github.com/TYPLive/typlive-scoreboards
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.3.6' );
+define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.3.7' );
 define( 'TYPLIVE_SCOREBOARDS_FILE', __FILE__ );
 define( 'TYPLIVE_SCOREBOARDS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
@@ -262,12 +262,17 @@ final class TYPLive_Scoreboards {
 	private function schedule_data() {
 		$rows           = array();
 		$player_options = array();
+		$scoreboards    = array();
 		$pair_rows      = array();
 		$api            = new TYPLive_DigitalPool();
 
 		foreach ( self::tracked_boards() as $slug => $board ) {
 			$player_name            = (string) $board['player_name'];
 			$player_options[ $slug ] = array(
+				'slug' => $slug,
+				'name' => $player_name,
+			);
+			$scoreboards[] = array(
 				'slug' => $slug,
 				'name' => $player_name,
 			);
@@ -307,6 +312,12 @@ final class TYPLive_Scoreboards {
 				return strcasecmp( $a['name'], $b['name'] );
 			}
 		);
+		usort(
+			$scoreboards,
+			function ( $a, $b ) {
+				return strcasecmp( $a['name'], $b['name'] );
+			}
+		);
 
 		usort(
 			$rows,
@@ -329,6 +340,7 @@ final class TYPLive_Scoreboards {
 		return array(
 			'event'      => 'Spots & Stripes on Tour',
 			'players'    => $players,
+			'scoreboards' => $scoreboards,
 			'schedule'   => $rows,
 			'updated_at' => gmdate( 'c' ),
 		);

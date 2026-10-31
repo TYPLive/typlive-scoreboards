@@ -3,7 +3,7 @@
  * Plugin Name: TYP Live Scoreboards
  * Plugin URI: https://github.com/TYPLive/typlive-scoreboards
  * Description: Streamlabs-ready live pool scoreboards with stable player URLs.
- * Version: 0.5.4
+ * Version: 0.5.5
  * Author: TYP Live
  * Author URI: https://typlive.com/
  * Update URI: https://github.com/TYPLive/typlive-scoreboards
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.5.4' );
+define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.5.5' );
 define( 'TYPLIVE_SCOREBOARDS_FILE', __FILE__ );
 define( 'TYPLIVE_SCOREBOARDS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
@@ -157,6 +157,48 @@ final class TYPLive_Scoreboards {
 		return $boards;
 	}
 
+	public static function pair_boards() {
+		return array(
+			'pair-joe-prince-michael-hope' => self::pair_board(
+				'pair-joe-prince-michael-hope',
+				'Joe Prince & Michael Hope',
+				array( 'Joe Prince', 'Michael Hope' )
+			),
+			'pair-mary-talbot-joe-prince' => self::pair_board(
+				'pair-mary-talbot-joe-prince',
+				'Mary Talbot & Joe Prince',
+				array( 'Mary Talbot', 'Joe Prince' )
+			),
+		);
+	}
+
+	private static function pair_board( $slug, $name, $members = array() ) {
+		if ( empty( $members ) ) {
+			foreach ( self::tracked_boards() as $board ) {
+				if ( false !== stripos( $name, $board['player_name'] ) ) {
+					$members[] = $board['player_name'];
+				}
+			}
+		}
+
+		return array(
+			'slug'           => sanitize_title( $slug ),
+			'player_id'      => 0,
+			'player_name'    => sanitize_text_field( $name ),
+			'pair_members'   => array_values( array_unique( array_map( 'sanitize_text_field', $members ) ) ),
+			'is_pair'        => true,
+			'country'        => '',
+			'event_id'       => 0,
+			'event_name'     => 'Spots & Stripes on Tour',
+			'event_venue'    => "Harrah's Cherokee Casino Resort",
+			'opponent_name'  => 'Opponents TBC',
+			'player_score'   => 0,
+			'opponent_score' => 0,
+			'race_to'        => 0,
+			'table'          => 'Table TBC',
+		);
+	}
+
 	public static function settings() {
 		$saved = get_option( self::OPTION_KEY, array() );
 		if ( is_array( $saved ) && isset( $saved['accent'] ) && '#d8ff3e' === strtolower( (string) $saved['accent'] ) ) {
@@ -167,7 +209,7 @@ final class TYPLive_Scoreboards {
 		}
 		$settings           = wp_parse_args( is_array( $saved ) ? $saved : array(), self::default_settings() );
 		$saved_boards       = isset( $settings['boards'] ) && is_array( $settings['boards'] ) ? $settings['boards'] : array();
-		$settings['boards'] = array_merge( $saved_boards, self::tracked_boards() );
+		$settings['boards'] = array_merge( $saved_boards, self::tracked_boards(), self::pair_boards() );
 		return $settings;
 	}
 
@@ -425,7 +467,7 @@ final class TYPLive_Scoreboards {
 				'slug' => $slug,
 				'name' => $player_name,
 			);
-			$scoreboards[] = array(
+			$scoreboards[ $slug ] = array(
 				'slug' => $slug,
 				'name' => $player_name,
 			);
@@ -452,6 +494,11 @@ final class TYPLive_Scoreboards {
 						'slug' => $display_slug,
 						'name' => $display_name,
 					);
+					$scoreboards[ $display_slug ] = array(
+						'slug' => $display_slug,
+						'name' => $display_name,
+					);
+					set_transient( 'typlive_pair_board_' . md5( $display_slug ), self::pair_board( $display_slug, $display_name ), DAY_IN_SECONDS );
 				}
 
 				$match['tracked_player'] = $display_name;
@@ -460,7 +507,8 @@ final class TYPLive_Scoreboards {
 			}
 		}
 
-		$players = array_values( $player_options );
+		$players     = array_values( $player_options );
+		$scoreboards = array_values( $scoreboards );
 		usort(
 			$players,
 			function ( $a, $b ) {
@@ -615,7 +663,18 @@ final class TYPLive_Scoreboards {
 		$settings = self::settings();
 		$boards   = isset( $settings['boards'] ) && is_array( $settings['boards'] ) ? $settings['boards'] : array();
 
-		return isset( $boards[ $slug ] ) && is_array( $boards[ $slug ] ) ? $boards[ $slug ] : null;
+		if ( isset( $boards[ $slug ] ) && is_array( $boards[ $slug ] ) ) {
+			return $boards[ $slug ];
+		}
+
+		if ( 0 === strpos( $slug, 'pair-' ) ) {
+			$pair = get_transient( 'typlive_pair_board_' . md5( $slug ) );
+			if ( is_array( $pair ) ) {
+				return $pair;
+			}
+		}
+
+		return null;
 	}
 }
 

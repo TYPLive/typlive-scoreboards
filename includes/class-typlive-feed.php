@@ -70,6 +70,28 @@ final class TYPLive_Feed {
 		}
 
 		$api = new TYPLive_DigitalPool();
+		if ( ! empty( $board['is_pair'] ) && ! empty( $board['pair_members'] ) && is_array( $board['pair_members'] ) ) {
+			$pair_slug = ! empty( $board['slug'] ) ? sanitize_title( $board['slug'] ) : '';
+			$last_error = null;
+			foreach ( $board['pair_members'] as $member ) {
+				$schedule = $api->schedule_for_player( sanitize_text_field( $member ) );
+				if ( is_wp_error( $schedule ) ) {
+					$last_error = $schedule;
+					continue;
+				}
+				foreach ( $schedule as $match ) {
+					if ( empty( $match['is_pair'] ) ) {
+						continue;
+					}
+					$match_slug = ! empty( $match['competitor_slug'] ) ? sanitize_title( $match['competitor_slug'] ) : '';
+					if ( '' === $pair_slug || $pair_slug === $match_slug ) {
+						return $match;
+					}
+				}
+			}
+			return $last_error ? $last_error : null;
+		}
+
 		return $api->match_for_player( $board['player_name'] );
 	}
 

@@ -3,7 +3,7 @@
  * Plugin Name: TYP Live Scoreboards
  * Plugin URI: https://github.com/TYPLive/typlive-scoreboards
  * Description: Streamlabs-ready live pool scoreboards with stable player URLs.
- * Version: 0.3.5
+ * Version: 0.3.6
  * Author: TYP Live
  * Author URI: https://typlive.com/
  * Update URI: https://github.com/TYPLive/typlive-scoreboards
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.3.5' );
+define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.3.6' );
 define( 'TYPLIVE_SCOREBOARDS_FILE', __FILE__ );
 define( 'TYPLIVE_SCOREBOARDS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
@@ -260,13 +260,14 @@ final class TYPLive_Scoreboards {
 	}
 
 	private function schedule_data() {
-		$rows    = array();
-		$players = array();
-		$api     = new TYPLive_DigitalPool();
+		$rows           = array();
+		$player_options = array();
+		$pair_rows      = array();
+		$api            = new TYPLive_DigitalPool();
 
 		foreach ( self::tracked_boards() as $slug => $board ) {
-			$player_name = (string) $board['player_name'];
-			$players[]   = array(
+			$player_name            = (string) $board['player_name'];
+			$player_options[ $slug ] = array(
 				'slug' => $slug,
 				'name' => $player_name,
 			);
@@ -277,12 +278,29 @@ final class TYPLive_Scoreboards {
 			}
 
 			foreach ( $schedule as $match ) {
-				$match['tracked_player'] = $player_name;
-				$match['player_slug']    = $slug;
+				$display_name = $player_name;
+				$display_slug = $slug;
+				if ( ! empty( $match['is_pair'] ) && ! empty( $match['player_name'] ) ) {
+					$display_name = (string) $match['player_name'];
+					$display_slug = ! empty( $match['competitor_slug'] ) ? (string) $match['competitor_slug'] : 'pair-' . sanitize_title( $display_name );
+					$pair_key     = ( ! empty( $match['match_id'] ) ? 'id-' . absint( $match['match_id'] ) : md5( wp_json_encode( $match ) ) ) . '|' . $display_slug;
+					if ( isset( $pair_rows[ $pair_key ] ) ) {
+						continue;
+					}
+					$pair_rows[ $pair_key ]          = true;
+					$player_options[ $display_slug ] = array(
+						'slug' => $display_slug,
+						'name' => $display_name,
+					);
+				}
+
+				$match['tracked_player'] = $display_name;
+				$match['player_slug']    = $display_slug;
 				$rows[]                  = $match;
 			}
 		}
 
+		$players = array_values( $player_options );
 		usort(
 			$players,
 			function ( $a, $b ) {

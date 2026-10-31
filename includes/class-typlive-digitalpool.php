@@ -241,6 +241,11 @@ GRAPHQL;
 		$side2           = isset( $match['challenger2_name'] ) ? sanitize_text_field( $match['challenger2_name'] ) : '';
 		$targets         = array_map( array( $this, 'normalize_name' ), $competitor_names ? $competitor_names : array( $player_name ) );
 		$player_is_side1 = in_array( $this->normalize_name( $side1 ), $targets, true );
+		$player_side     = $player_is_side1 ? $side1 : $side2;
+		$opponent_side   = $player_is_side1 ? $side2 : $side1;
+		$is_pair         = false !== strpos( $player_side, '&' );
+		$player_display  = $this->display_competitor_name( $player_side );
+		$opponent_display = $this->display_competitor_name( $opponent_side );
 		$status          = isset( $match['status'] ) ? strtoupper( sanitize_key( $match['status'] ) ) : 'SCHEDULED';
 		$round           = ! empty( $match['round'] ) ? 'Round ' . absint( $match['round'] ) : 'Match';
 		$table           = isset( $match['table_name'] ) ? sanitize_text_field( $match['table_name'] ) : '';
@@ -289,11 +294,73 @@ GRAPHQL;
 			'scheduled_label' => $scheduled_label,
 			'table'          => $table ? $table : 'Table TBC',
 			'tournament'     => ! empty( $match['tournament']['name'] ) ? sanitize_text_field( $match['tournament']['name'] ) : '',
-			'player_name'    => $player_is_side1 ? $side1 : $side2,
+			'is_pair'        => $is_pair,
+			'competitor_slug' => $is_pair ? 'pair-' . sanitize_title( $player_display ) : '',
+			'player_name'    => $player_display,
 			'player_score'   => is_numeric( $player_score ) ? absint( $player_score ) : 0,
-			'opponent_name'  => $player_is_side1 ? $side2 : $side1,
+			'opponent_name'  => $opponent_display,
 			'opponent_score' => is_numeric( $opponent_score ) ? absint( $opponent_score ) : 0,
 		);
+	}
+
+	private function display_competitor_name( $competitor_name ) {
+		$competitor_name = sanitize_text_field( $competitor_name );
+		if ( '' === $competitor_name || false === strpos( $competitor_name, '&' ) ) {
+			return $competitor_name;
+		}
+
+		$members     = array();
+		$team_target = $this->normalize_name( $competitor_name );
+		foreach ( $this->pair_roster() as $entry ) {
+			if ( empty( $entry['team']['name'] ) || $team_target !== $this->normalize_name( $entry['team']['name'] ) ) {
+				continue;
+			}
+			$member = ! empty( $entry['name'] ) ? sanitize_text_field( $entry['name'] ) : '';
+			if ( '' === $member && ! empty( $entry['player']['name'] ) ) {
+				$member = sanitize_text_field( $entry['player']['name'] );
+			}
+			if ( '' !== $member ) {
+				$members[ $this->normalize_name( $member ) ] = $member;
+			}
+		}
+
+		if ( count( $members ) < 2 ) {
+			return $competitor_name;
+		}
+
+		$ordered = array();
+		$used    = array();
+		$parts   = preg_split( '/\s*&\s*/', $competitor_name );
+		foreach ( $parts as $part ) {
+			foreach ( $members as $key => $member ) {
+				if ( isset( $used[ $key ] ) || ! $this->abbreviated_name_matches( $part, $member ) ) {
+					continue;
+				}
+				$ordered[]    = $member;
+				$used[ $key ] = true;
+				break;
+			}
+		}
+		foreach ( $members as $key => $member ) {
+			if ( ! isset( $used[ $key ] ) ) {
+				$ordered[] = $member;
+			}
+		}
+
+		return implode( ' & ', $ordered );
+	}
+
+	private function abbreviated_name_matches( $abbreviated, $full_name ) {
+		$short = explode( ' ', $this->normalize_name( $abbreviated ) );
+		$full  = explode( ' ', $this->normalize_name( $full_name ) );
+		if ( empty( $short[0] ) || empty( $full[0] ) || $short[0] !== $full[0] ) {
+			return false;
+		}
+		if ( count( $short ) < 2 ) {
+			return true;
+		}
+
+		return substr( end( $short ), 0, 1 ) === substr( end( $full ), 0, 1 );
 	}
 
 	private function competitor_names_for_player( $player_name ) {

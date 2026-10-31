@@ -83,12 +83,16 @@ final class TYPLive_Feed {
 		$score['scheduled_time'] = isset( $schedule['scheduled_time'] ) ? (string) $schedule['scheduled_time'] : '';
 		$score['match_number']   = isset( $schedule['match_number'] ) ? absint( $schedule['match_number'] ) : 0;
 		$score['tournament']     = isset( $schedule['tournament'] ) ? (string) $schedule['tournament'] : '';
+		if ( ! empty( $schedule['is_pair'] ) && ( empty( $score['live'] ) || ! empty( $schedule['live'] ) ) ) {
+			$score['player']['name']   = ! empty( $schedule['player_name'] ) ? (string) $schedule['player_name'] : $score['player']['name'];
+			$score['opponent']['name'] = ! empty( $schedule['opponent_name'] ) ? (string) $schedule['opponent_name'] : $score['opponent']['name'];
+		}
 
 		if ( empty( $score['live'] ) ) {
 			$score['live']              = ! empty( $schedule['live'] );
 			$score['feed_ok']           = true;
 			$score['status']            = isset( $schedule['status'] ) ? ucwords( strtolower( str_replace( '_', ' ', $schedule['status'] ) ) ) : 'Scheduled';
-			$score['player']['name']    = isset( $board['player_name'] ) ? (string) $board['player_name'] : (string) $schedule['player_name'];
+			$score['player']['name']    = ! empty( $schedule['is_pair'] ) && ! empty( $schedule['player_name'] ) ? (string) $schedule['player_name'] : ( isset( $board['player_name'] ) ? (string) $board['player_name'] : (string) $schedule['player_name'] );
 			$score['player']['score']   = isset( $schedule['player_score'] ) ? absint( $schedule['player_score'] ) : 0;
 			$score['opponent']['name']  = ! empty( $schedule['opponent_name'] ) ? (string) $schedule['opponent_name'] : 'Opponent TBC';
 			$score['opponent']['score'] = isset( $schedule['opponent_score'] ) ? absint( $schedule['opponent_score'] ) : 0;

@@ -4,7 +4,7 @@ Tags: scoreboard, streamlabs, pool, live scores, overlay
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.3.5
+Stable tag: 0.3.6
 License: GPLv2 or later
 
 Streamlabs-ready live pool scoreboards with stable player URLs.
@@ -41,6 +41,11 @@ If a route returns a WordPress 404, open Settings > Permalinks and click Save Ch
 Scoreboard routes such as /scoreboard-sam/ have a transparent background. A 1280 x 300 browser-source canvas is a good starting point for a landscape lower-third overlay. The design automatically scales down for narrower mobile canvases.
 
 == Changelog ==
+
+= 0.3.6 =
+* Added combined pair-team options to the schedule filters.
+* Pair matches show both full player names on schedule rows and live scoreboards.
+* De-duplicated pair fixtures that belong to two tracked players.
 
 = 0.3.5 =
 * Updated the Spots & Stripes on Tour event introduction and venue wording.

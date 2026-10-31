@@ -1,6 +1,6 @@
 # TYP Live Scoreboards
 
-WordPress plugin for Ultimate Pool USA live scoreboards and the combined tracked-player schedule at `/upusa-schedule/`.
+WordPress plugin for Spots & Stripes on Tour live scoreboards and the combined tracked-player schedule at `/upusa-schedule/`.
 
 ## Automatic updates
 

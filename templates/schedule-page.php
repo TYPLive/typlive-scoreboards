@@ -22,7 +22,7 @@ foreach ( $schedule as $match ) {
 	<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 	<meta name="robots" content="noindex,nofollow,noarchive">
 	<meta http-equiv="Cache-Control" content="no-store">
-	<title>UPUSA tracked player schedule</title>
+	<title>Spots &amp; Stripes on Tour schedule</title>
 	<link rel="stylesheet" href="<?php echo esc_url( TYPLIVE_SCOREBOARDS_URL . 'assets/schedule-page.css?ver=' . TYPLIVE_SCOREBOARDS_VERSION ); ?>">
 </head>
 <body class="typlive-public-schedule">
@@ -34,9 +34,9 @@ foreach ( $schedule as $match ) {
 	>
 		<header class="upusa-schedule-hero">
 			<div>
-				<p class="upusa-eyebrow">Ultimate Pool USA</p>
-				<h1>Tracked player schedule</h1>
-				<p class="upusa-intro">Match times, opponents and table allocations for the players we are following at the 2026 League Grand Finals.</p>
+				<p class="upusa-eyebrow">2026 Ultimate Pool USA</p>
+				<h1>Spots &amp; Stripes on Tour</h1>
+				<p class="upusa-intro">Match times, opponents, scores and table allocations for the Spots &amp; Stripes players at the 2026 League Grand Finals.</p>
 			</div>
 			<div class="upusa-live-state" data-feed-state>
 				<span></span>

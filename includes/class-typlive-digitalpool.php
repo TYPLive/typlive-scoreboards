@@ -8,6 +8,13 @@ final class TYPLive_DigitalPool {
 	const API_URL    = 'https://api-nyc.digitalpool.com/v1/graphql';
 	const EVENT_ID   = 2693;
 	const EVENT_SLUG = '2026-ultimate-pool-usa-league-grand-finals';
+	const PAIR_TOURNAMENT_IDS = array( 159103, 159104 );
+
+	/** @var array<string,array<int,string>> */
+	private $competitor_name_cache = array();
+
+	/** @var array<int,array<string,mixed>>|null */
+	private $pair_roster = null;
 
 	/**
 	 * Return the most relevant DigitalPool match for a player.
@@ -36,10 +43,10 @@ final class TYPLive_DigitalPool {
 			return $matches;
 		}
 
-		$target_name = $this->normalize_name( $player_name );
-		$schedule    = array();
+		$competitor_names = $this->competitor_names_for_player( $player_name );
+		$schedule         = array();
 		foreach ( $matches as $match ) {
-			if ( ! $this->is_exact_player_match( $match, $target_name ) ) {
+			if ( ! $this->is_exact_player_match( $match, $competitor_names ) ) {
 				continue;
 			}
 
@@ -48,7 +55,7 @@ final class TYPLive_DigitalPool {
 				continue;
 			}
 
-			$schedule[] = $this->format_match( $match, $player_name );
+			$schedule[] = $this->format_match( $match, $player_name, $competitor_names );
 		}
 
 		usort(
@@ -77,6 +84,7 @@ final class TYPLive_DigitalPool {
 		if ( '' === trim( $player_name ) ) {
 			return array();
 		}
+		$competitor_names = $this->competitor_names_for_player( $player_name );
 
 		$cache_key = 'typlive_dp_matches_' . md5( self::EVENT_ID . '|' . $this->normalize_name( $player_name ) );
 		$cached    = get_transient( $cache_key );
@@ -85,13 +93,15 @@ final class TYPLive_DigitalPool {
 		}
 
 		$query = <<<'GRAPHQL'
-query PlayerSchedule($event_id: Int!, $player: String!) {
+query PlayerSchedule($event_id: Int!, $player: String!, $competitors: [String!]!) {
   tournament_brackets(
     where: {
       tournament: { event_id: { _eq: $event_id } }
       _or: [
         { challenger1_name: { _ilike: $player } }
         { challenger2_name: { _ilike: $player } }
+        { challenger1_name: { _in: $competitors } }
+        { challenger2_name: { _in: $competitors } }
       ]
     }
     order_by: [{ scheduled_time: asc }, { match_number: asc }]
@@ -134,8 +144,9 @@ GRAPHQL;
 					array(
 						'query'     => $query,
 						'variables' => array(
-							'event_id' => self::EVENT_ID,
-							'player'   => '%' . $player_name . '%',
+							'event_id'    => self::EVENT_ID,
+							'player'      => '%' . $player_name . '%',
+							'competitors' => array_values( $competitor_names ),
 						),
 					)
 				),
@@ -166,12 +177,12 @@ GRAPHQL;
 	}
 
 	private function choose_match( $matches, $player_name ) {
-		$exact       = array();
-		$target_name = $this->normalize_name( $player_name );
-		$now         = time();
+		$exact            = array();
+		$competitor_names = $this->competitor_names_for_player( $player_name );
+		$now              = time();
 
 		foreach ( $matches as $match ) {
-			if ( ! $this->is_exact_player_match( $match, $target_name ) ) {
+			if ( ! $this->is_exact_player_match( $match, $competitor_names ) ) {
 				continue;
 			}
 
@@ -211,23 +222,25 @@ GRAPHQL;
 			}
 		);
 
-		return $this->format_match( $exact[0], $player_name );
+		return $this->format_match( $exact[0], $player_name, $competitor_names );
 	}
 
-	private function is_exact_player_match( $match, $target_name ) {
+	private function is_exact_player_match( $match, $competitor_names ) {
 		if ( ! is_array( $match ) ) {
 			return false;
 		}
 
-		$side1 = isset( $match['challenger1_name'] ) ? (string) $match['challenger1_name'] : '';
-		$side2 = isset( $match['challenger2_name'] ) ? (string) $match['challenger2_name'] : '';
-		return $target_name === $this->normalize_name( $side1 ) || $target_name === $this->normalize_name( $side2 );
+		$side1   = isset( $match['challenger1_name'] ) ? (string) $match['challenger1_name'] : '';
+		$side2   = isset( $match['challenger2_name'] ) ? (string) $match['challenger2_name'] : '';
+		$targets = array_map( array( $this, 'normalize_name' ), (array) $competitor_names );
+		return in_array( $this->normalize_name( $side1 ), $targets, true ) || in_array( $this->normalize_name( $side2 ), $targets, true );
 	}
 
-	private function format_match( $match, $player_name ) {
+	private function format_match( $match, $player_name, $competitor_names = array() ) {
 		$side1           = isset( $match['challenger1_name'] ) ? sanitize_text_field( $match['challenger1_name'] ) : '';
 		$side2           = isset( $match['challenger2_name'] ) ? sanitize_text_field( $match['challenger2_name'] ) : '';
-		$player_is_side1 = $this->normalize_name( $player_name ) === $this->normalize_name( $side1 );
+		$targets         = array_map( array( $this, 'normalize_name' ), $competitor_names ? $competitor_names : array( $player_name ) );
+		$player_is_side1 = in_array( $this->normalize_name( $side1 ), $targets, true );
 		$status          = isset( $match['status'] ) ? strtoupper( sanitize_key( $match['status'] ) ) : 'SCHEDULED';
 		$round           = ! empty( $match['round'] ) ? 'Round ' . absint( $match['round'] ) : 'Match';
 		$table           = isset( $match['table_name'] ) ? sanitize_text_field( $match['table_name'] ) : '';
@@ -281,6 +294,86 @@ GRAPHQL;
 			'opponent_name'  => $player_is_side1 ? $side2 : $side1,
 			'opponent_score' => is_numeric( $opponent_score ) ? absint( $opponent_score ) : 0,
 		);
+	}
+
+	private function competitor_names_for_player( $player_name ) {
+		$target_name = $this->normalize_name( $player_name );
+		if ( isset( $this->competitor_name_cache[ $target_name ] ) ) {
+			return $this->competitor_name_cache[ $target_name ];
+		}
+
+		$names = array( sanitize_text_field( $player_name ) );
+		foreach ( $this->pair_roster() as $entry ) {
+			$registered_name = ! empty( $entry['name'] ) ? (string) $entry['name'] : '';
+			if ( '' === $registered_name && ! empty( $entry['player']['name'] ) ) {
+				$registered_name = (string) $entry['player']['name'];
+			}
+			if ( $target_name !== $this->normalize_name( $registered_name ) || empty( $entry['team']['name'] ) ) {
+				continue;
+			}
+			$names[] = sanitize_text_field( $entry['team']['name'] );
+		}
+
+		$names = array_values( array_unique( array_filter( $names ) ) );
+		$this->competitor_name_cache[ $target_name ] = $names;
+		return $names;
+	}
+
+	private function pair_roster() {
+		if ( is_array( $this->pair_roster ) ) {
+			return $this->pair_roster;
+		}
+
+		$cache_key = 'typlive_dp_pair_roster_' . md5( implode( '|', self::PAIR_TOURNAMENT_IDS ) );
+		$cached    = get_transient( $cache_key );
+		if ( is_array( $cached ) ) {
+			$this->pair_roster = $cached;
+			return $cached;
+		}
+
+		$query = <<<'GRAPHQL'
+query PairRoster($tournament_ids: [Int!]!) {
+  tournament_players(
+    where: {
+      tournament_id: { _in: $tournament_ids }
+      team_id: { _is_null: false }
+    }
+  ) {
+    name
+    player { name }
+    team { name }
+  }
+}
+GRAPHQL;
+
+		$response = wp_remote_post(
+			self::API_URL,
+			array(
+				'timeout'     => 20,
+				'redirection' => 2,
+				'headers'     => array(
+					'Accept'       => 'application/json',
+					'Content-Type' => 'application/json',
+					'User-Agent'   => 'TYP-Live-Scoreboards/' . TYPLIVE_SCOREBOARDS_VERSION . ' (WordPress)',
+				),
+				'body'        => wp_json_encode(
+					array(
+						'query'     => $query,
+						'variables' => array( 'tournament_ids' => self::PAIR_TOURNAMENT_IDS ),
+					)
+				),
+			)
+		);
+
+		if ( is_wp_error( $response ) || 200 !== wp_remote_retrieve_response_code( $response ) ) {
+			$this->pair_roster = array();
+			return $this->pair_roster;
+		}
+
+		$data = json_decode( wp_remote_retrieve_body( $response ), true );
+		$this->pair_roster = isset( $data['data']['tournament_players'] ) && is_array( $data['data']['tournament_players'] ) ? $data['data']['tournament_players'] : array();
+		set_transient( $cache_key, $this->pair_roster, 15 );
+		return $this->pair_roster;
 	}
 
 	private function normalize_name( $name ) {

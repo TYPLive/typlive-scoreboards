@@ -198,7 +198,7 @@ final class TYPLive_Admin {
 				<div class="typlive-step-number">1</div>
 				<div class="typlive-step-body">
 					<h2>Choose a tournament</h2>
-					<p class="description">All Ultimate Pool USA tournaments supplied by the live-scoring system.</p>
+					<p class="description">Ultimate Pool USA tournaments available for Spots &amp; Stripes on Tour coverage.</p>
 					<?php if ( is_wp_error( $tournaments ) ) : ?>
 						<div class="notice notice-error inline"><p><?php echo esc_html( $tournaments->get_error_message() ); ?></p></div>
 					<?php else : ?>
@@ -268,7 +268,7 @@ final class TYPLive_Admin {
 
 			<?php if ( ! empty( $settings['boards'] ) ) : ?>
 				<section class="typlive-links">
-					<h2>UPUSA schedule page</h2>
+					<h2>Spots &amp; Stripes on Tour schedule</h2>
 					<p>One public page combines the published schedules for all eight tracked players.</p>
 					<?php $schedule_url = home_url( '/upusa-schedule/' ); ?>
 					<div class="typlive-schedule-admin-link">

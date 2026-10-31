@@ -71,7 +71,7 @@ final class TYPLive_Updater {
 			'last_updated'  => $release['published_at'],
 			'download_link' => $release['package'],
 			'sections'      => array(
-				'description' => 'Live Ultimate Pool USA scoreboards and a combined tracked-player schedule for TYP Live.',
+				'description' => 'Live Spots & Stripes on Tour scoreboards and a combined tracked-player schedule for TYP Live.',
 				'changelog'   => nl2br( esc_html( $release['body'] ) ),
 			),
 		);

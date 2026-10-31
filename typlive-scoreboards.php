@@ -3,7 +3,7 @@
  * Plugin Name: TYP Live Scoreboards
  * Plugin URI: https://github.com/TYPLive/typlive-scoreboards
  * Description: Streamlabs-ready live pool scoreboards with stable player URLs.
- * Version: 0.3.1
+ * Version: 0.3.2
  * Author: TYP Live
  * Author URI: https://typlive.com/
  * Update URI: https://github.com/TYPLive/typlive-scoreboards
@@ -16,7 +16,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.3.1' );
+define( 'TYPLIVE_SCOREBOARDS_VERSION', '0.3.2' );
 define( 'TYPLIVE_SCOREBOARDS_FILE', __FILE__ );
 define( 'TYPLIVE_SCOREBOARDS_DIR', plugin_dir_path( __FILE__ ) );
 define( 'TYPLIVE_SCOREBOARDS_URL', plugin_dir_url( __FILE__ ) );
@@ -74,7 +74,7 @@ final class TYPLive_Scoreboards {
 		return array(
 			'mode'            => 'live',
 			'source_url'      => 'https://agoneus.com/upusa/livescoring/',
-			'event_name'      => 'ULTIMATE POOL USA',
+			'event_name'      => 'Spots & Stripes on Tour',
 			'selected_event_id'    => 0,
 			'selected_event_name'  => '',
 			'selected_event_venue' => '',
@@ -104,7 +104,7 @@ final class TYPLive_Scoreboards {
 				'player_name'    => $name,
 				'country'        => '',
 				'event_id'       => 0,
-				'event_name'     => '2026 Ultimate Pool USA League Grand Finals',
+				'event_name'     => 'Spots & Stripes on Tour',
 				'event_venue'    => "Harrah's Cherokee Casino Resort",
 				'opponent_name'  => 'Opponent TBC',
 				'player_score'   => 0,
@@ -121,6 +121,9 @@ final class TYPLive_Scoreboards {
 		$saved = get_option( self::OPTION_KEY, array() );
 		if ( is_array( $saved ) && isset( $saved['accent'] ) && '#d8ff3e' === strtolower( (string) $saved['accent'] ) ) {
 			$saved['accent'] = '#E32934';
+		}
+		if ( is_array( $saved ) && isset( $saved['event_name'] ) && 'ULTIMATE POOL USA' === strtoupper( trim( (string) $saved['event_name'] ) ) ) {
+			$saved['event_name'] = 'Spots & Stripes on Tour';
 		}
 		$settings           = wp_parse_args( is_array( $saved ) ? $saved : array(), self::default_settings() );
 		$saved_boards       = isset( $settings['boards'] ) && is_array( $settings['boards'] ) ? $settings['boards'] : array();
@@ -299,7 +302,7 @@ final class TYPLive_Scoreboards {
 		);
 
 		return array(
-			'event'      => '2026 Ultimate Pool USA League Grand Finals',
+			'event'      => 'Spots & Stripes on Tour',
 			'players'    => $players,
 			'schedule'   => $rows,
 			'updated_at' => gmdate( 'c' ),

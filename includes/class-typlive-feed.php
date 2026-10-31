@@ -100,7 +100,7 @@ final class TYPLive_Feed {
 
 	private function manual_score( $board, $is_demo ) {
 		return array(
-			'event'           => isset( $this->settings['event_name'] ) ? (string) $this->settings['event_name'] : 'ULTIMATE POOL USA',
+			'event'           => isset( $this->settings['event_name'] ) ? (string) $this->settings['event_name'] : 'Spots & Stripes on Tour',
 			'round'           => isset( $board['round_name'] ) ? (string) $board['round_name'] : ( $is_demo ? 'Last 32' : 'Match' ),
 			'live'            => true,
 			'is_demo'         => (bool) $is_demo,
@@ -124,7 +124,7 @@ final class TYPLive_Feed {
 
 	private function waiting_score( $board ) {
 		return array(
-			'event'        => isset( $board['event_name'] ) ? (string) $board['event_name'] : ( isset( $this->settings['event_name'] ) ? (string) $this->settings['event_name'] : 'ULTIMATE POOL USA' ),
+			'event'        => isset( $board['event_name'] ) ? (string) $board['event_name'] : ( isset( $this->settings['event_name'] ) ? (string) $this->settings['event_name'] : 'Spots & Stripes on Tour' ),
 			'round'        => 'Waiting for match',
 			'live'         => false,
 			'is_demo'      => false,
@@ -219,7 +219,7 @@ final class TYPLive_Feed {
 		$side2 = $this->agoneus_side_name( $match, 2 );
 
 		return array(
-			'event'        => isset( $board['event_name'] ) ? (string) $board['event_name'] : 'ULTIMATE POOL USA',
+			'event'        => isset( $board['event_name'] ) ? (string) $board['event_name'] : 'Spots & Stripes on Tour',
 			'round'        => $round_name,
 			'live'         => true,
 			'is_demo'      => false,
@@ -478,7 +478,7 @@ final class TYPLive_Feed {
 		$opponent_score  = $target_is_first ? $match['score2'] : $match['score1'];
 
 		return array(
-			'event'        => isset( $this->settings['event_name'] ) ? (string) $this->settings['event_name'] : 'ULTIMATE POOL USA',
+			'event'        => isset( $this->settings['event_name'] ) ? (string) $this->settings['event_name'] : 'Spots & Stripes on Tour',
 			'round'        => ! empty( $match['status'] ) ? (string) $match['status'] : 'Match',
 			'live'         => true,
 			'is_demo'      => false,

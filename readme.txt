@@ -4,7 +4,7 @@ Tags: scoreboard, streamlabs, pool, live scores, overlay
 Requires at least: 6.2
 Tested up to: 6.8
 Requires PHP: 7.4
-Stable tag: 0.3.1
+Stable tag: 0.3.2
 License: GPLv2 or later
 
 Streamlabs-ready live pool scoreboards with stable player URLs.
@@ -16,13 +16,13 @@ TYP Live Scoreboards creates transparent browser-source overlays at routes such 
 * /scoreboard-sam/
 * /scoreboard-nigel/
 
-The Grand Finals build includes ready-to-use links for Sam, Nigel, Michael, Joe, Ollie, Ashley, Sean and Mary. Additional players can still be selected in Settings > TYP Live Scoreboards.
+The Spots & Stripes on Tour build includes ready-to-use links for Sam, Nigel, Michael, Joe, Ollie, Ashley, Sean and Mary. Additional players can still be selected in Settings > TYP Live Scoreboards.
 
-The combined tracked-player schedule is available at /upusa-schedule/.
+The combined Spots & Stripes on Tour schedule is available at /upusa-schedule/.
 
 Use Settings > TYP Live Scoreboards to configure player mappings, demo scores, styling, the live-scoring source and refresh rate.
 
-The plugin reads the Ultimate Pool USA tournament catalogue and live scores from All Scores Live. It also reads the 2026 League Grand Finals player schedule from DigitalPool for opponent, round and table allocation data.
+The plugin reads the Ultimate Pool USA tournament catalogue and live scores from All Scores Live. It also reads the 2026 League Grand Finals schedule and the National Mixed Pairs and National Pairs team entries from DigitalPool for opponent, round and table allocation data.
 
 == Installation ==
 
@@ -41,6 +41,11 @@ If a route returns a WordPress 404, open Settings > Permalinks and click Save Ch
 Scoreboard routes such as /scoreboard-sam/ have a transparent background. A 1280 x 300 browser-source canvas is a good starting point for a landscape lower-third overlay. The design automatically scales down for narrower mobile canvases.
 
 == Changelog ==
+
+= 0.3.2 =
+* Renamed the public event experience to Spots & Stripes on Tour.
+* Added DigitalPool team-roster matching for the National Mixed Pairs and National Pairs.
+* Includes Mary Talbot and Joe Prince as a mixed pair, plus Joe Prince and Michael Hope as a national pair.
 
 = 0.3.1 =
 * Added separate Live now, Upcoming matches and Results sections to the combined schedule.

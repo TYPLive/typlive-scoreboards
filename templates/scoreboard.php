@@ -6,6 +6,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 $settings = TYPLive_Scoreboards::settings();
 $accent   = isset( $settings['accent'] ) ? sanitize_hex_color( $settings['accent'] ) : '#E32934';
 $accent   = $accent ? $accent : '#E32934';
+$race_to  = isset( $data['race_to'] ) ? absint( $data['race_to'] ) : 0;
 ?>
 <section
 	class="typlive-scoreboard"
@@ -23,6 +24,10 @@ $accent   = $accent ? $accent : '#E32934';
 				<span class="typlive-turn" aria-label="Tracked player"></span>
 				<span class="typlive-name" data-field="player-name"><?php echo esc_html( $data['player']['name'] ); ?></span>
 				<span class="typlive-score" data-field="player-score"><?php echo esc_html( $data['player']['score'] ); ?></span>
+			</div>
+			<div class="typlive-race" aria-label="<?php echo esc_attr( $race_to ? 'Race to ' . $race_to : 'Race length unavailable' ); ?>">
+				<span>Race to</span>
+				<strong data-field="race-to"><?php echo esc_html( $race_to ? $race_to : '—' ); ?></strong>
 			</div>
 			<div class="typlive-player typlive-player-opponent" data-player="opponent">
 				<span class="typlive-score" data-field="opponent-score"><?php echo esc_html( $data['opponent']['score'] ); ?></span>

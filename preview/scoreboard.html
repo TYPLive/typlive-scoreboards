@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Scoreboard preview</title>
+	<link rel="stylesheet" href="../assets/scoreboard.css">
+</head>
+<body class="typlive-overlay-page">
+	<section class="typlive-scoreboard" data-typlive-scoreboard data-endpoint="score-sam.json" data-refresh="5" style="--typlive-accent: #E32934;" aria-label="Live match score">
+		<div class="typlive-card">
+			<div class="typlive-round" data-field="round">Last 32</div>
+			<div class="typlive-match">
+				<div class="typlive-player typlive-player-featured" data-player="player">
+					<span class="typlive-turn" aria-label="Tracked player"></span>
+					<span class="typlive-name" data-field="player-name">Sam Jones</span>
+					<span class="typlive-score" data-field="player-score">5</span>
+				</div>
+				<div class="typlive-race" aria-label="Race to 7"><span>Race to</span><strong data-field="race-to">7</strong></div>
+				<div class="typlive-player typlive-player-opponent" data-player="opponent">
+					<span class="typlive-score" data-field="opponent-score">3</span>
+					<span class="typlive-name" data-field="opponent-name">Alex Morgan</span>
+				</div>
+			</div>
+		</div>
+	</section>
+	<script src="../assets/scoreboard.js"></script>
+</body>
+</html>

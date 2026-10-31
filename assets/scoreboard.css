@@ -64,7 +64,7 @@ body.typlive-overlay-page {
 
 .typlive-match {
 	display: grid;
-	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	grid-template-columns: minmax(0, 1fr) 58px minmax(0, 1fr);
 	align-items: stretch;
 	min-width: 0;
 }
@@ -79,6 +79,34 @@ body.typlive-overlay-page {
 
 .typlive-player-opponent {
 	grid-template-columns: 58px minmax(0, 1fr);
+}
+
+.typlive-race {
+	display: grid;
+	place-content: center;
+	gap: 2px;
+	min-width: 0;
+	background: #111113;
+	border-right: 1px solid var(--typlive-line);
+	border-left: 1px solid var(--typlive-line);
+	text-align: center;
+	text-transform: uppercase;
+}
+
+.typlive-race span {
+	color: #9b9ba1;
+	font-size: 7px;
+	font-weight: 750;
+	letter-spacing: 0.12em;
+	line-height: 1;
+}
+
+.typlive-race strong {
+	color: var(--typlive-accent);
+	font-size: 17px;
+	font-weight: 850;
+	letter-spacing: -0.03em;
+	line-height: 1;
 }
 
 .typlive-turn {
@@ -99,6 +127,7 @@ body.typlive-overlay-page {
 	letter-spacing: -0.025em;
 	line-height: 1;
 	text-overflow: ellipsis;
+	text-transform: uppercase;
 	white-space: nowrap;
 }
 
@@ -159,6 +188,18 @@ body.typlive-overlay-page {
 		grid-template-columns: 42px minmax(0, 1fr);
 	}
 
+	.typlive-match {
+		grid-template-columns: minmax(0, 1fr) 44px minmax(0, 1fr);
+	}
+
+	.typlive-race span {
+		font-size: 6px;
+	}
+
+	.typlive-race strong {
+		font-size: 14px;
+	}
+
 	.typlive-name,
 	.typlive-player-featured .typlive-name {
 		padding: 0 7px;
@@ -186,6 +227,10 @@ body.typlive-overlay-page {
 
 	.typlive-player-opponent {
 		grid-template-columns: 36px minmax(0, 1fr);
+	}
+
+	.typlive-match {
+		grid-template-columns: minmax(0, 1fr) 38px minmax(0, 1fr);
 	}
 
 	.typlive-name,

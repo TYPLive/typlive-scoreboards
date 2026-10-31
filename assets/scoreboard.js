@@ -27,6 +27,10 @@
 		text(root, 'round', data.round || data.status || 'Match');
 		text(root, 'player-name', data.player.name);
 		text(root, 'opponent-name', data.opponent.name);
+		const raceTo = Math.max(0, Number.parseInt(data.race_to, 10) || 0);
+		text(root, 'race-to', raceTo || '—');
+		const race = root.querySelector('.typlive-race');
+		if (race) race.setAttribute('aria-label', raceTo ? `Race to ${raceTo}` : 'Race length unavailable');
 		score(root, 'player-score', data.player.score);
 		score(root, 'opponent-score', data.opponent.score);
 	};

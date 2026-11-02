@@ -105,6 +105,9 @@ final class TYPLive_Feed {
 		$score['scheduled_time'] = isset( $schedule['scheduled_time'] ) ? (string) $schedule['scheduled_time'] : '';
 		$score['match_number']   = isset( $schedule['match_number'] ) ? absint( $schedule['match_number'] ) : 0;
 		$score['tournament']     = isset( $schedule['tournament'] ) ? (string) $schedule['tournament'] : '';
+		if ( ! empty( $schedule['race_to'] ) ) {
+			$score['race_to'] = absint( $schedule['race_to'] );
+		}
 		if ( ! empty( $schedule['is_pair'] ) && ( empty( $score['live'] ) || ! empty( $schedule['live'] ) ) ) {
 			$score['player']['name']   = ! empty( $schedule['player_name'] ) ? (string) $schedule['player_name'] : $score['player']['name'];
 			$score['opponent']['name'] = ! empty( $schedule['opponent_name'] ) ? (string) $schedule['opponent_name'] : $score['opponent']['name'];

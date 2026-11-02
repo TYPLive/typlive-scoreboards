@@ -147,8 +147,10 @@ query PlayerSchedule($event_id: Int!, $player: String!, $competitors: [String!]!
     table_name
     status
     challenger1_name
+    challenger1_race_to
     challenger1_score
     challenger2_name
+    challenger2_race_to
     challenger2_score
     tournament {
       id
@@ -319,8 +321,14 @@ GRAPHQL;
 			$scheduled_label = wp_date( 'D j M · g:i a', strtotime( $scheduled_time ), new DateTimeZone( 'America/New_York' ) ) . ' ET';
 		}
 
-		$player_score   = $player_is_side1 ? $match['challenger1_score'] : $match['challenger2_score'];
-		$opponent_score = $player_is_side1 ? $match['challenger2_score'] : $match['challenger1_score'];
+		$player_score     = $player_is_side1 ? $match['challenger1_score'] : $match['challenger2_score'];
+		$opponent_score   = $player_is_side1 ? $match['challenger2_score'] : $match['challenger1_score'];
+		$player_race_to   = $player_is_side1
+			? ( isset( $match['challenger1_race_to'] ) ? absint( $match['challenger1_race_to'] ) : 0 )
+			: ( isset( $match['challenger2_race_to'] ) ? absint( $match['challenger2_race_to'] ) : 0 );
+		$opponent_race_to = $player_is_side1
+			? ( isset( $match['challenger2_race_to'] ) ? absint( $match['challenger2_race_to'] ) : 0 )
+			: ( isset( $match['challenger1_race_to'] ) ? absint( $match['challenger1_race_to'] ) : 0 );
 		$score_available = is_numeric( $player_score ) && is_numeric( $opponent_score );
 		$live            = in_array( $status, array( 'IN_PROGRESS', 'INPROGRESS', 'LIVE' ), true );
 		$completed       = in_array( $status, array( 'COMPLETED', 'COMPLETE', 'FINISHED', 'FINAL' ), true );
@@ -352,10 +360,13 @@ GRAPHQL;
 			'tournament'     => ! empty( $match['tournament']['name'] ) ? sanitize_text_field( $match['tournament']['name'] ) : '',
 			'is_pair'        => $is_pair,
 			'competitor_slug' => $is_pair ? 'pair-' . sanitize_title( $player_display ) : '',
-			'player_name'    => $player_display,
-			'player_score'   => is_numeric( $player_score ) ? absint( $player_score ) : 0,
-			'opponent_name'  => $opponent_display,
-			'opponent_score' => is_numeric( $opponent_score ) ? absint( $opponent_score ) : 0,
+			'player_name'      => $player_display,
+			'player_score'     => is_numeric( $player_score ) ? absint( $player_score ) : 0,
+			'player_race_to'   => $player_race_to,
+			'opponent_name'    => $opponent_display,
+			'opponent_score'   => is_numeric( $opponent_score ) ? absint( $opponent_score ) : 0,
+			'opponent_race_to' => $opponent_race_to,
+			'race_to'          => $player_race_to ? $player_race_to : $opponent_race_to,
 		);
 	}
 
